@@ -3,109 +3,79 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>台灣門牌精準座標導航</title>
+  <title>台灣官方門牌導航系統</title>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css" />
   <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
   <style>
     * { box-sizing: border-box; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
-    body { margin: 0; padding: 14px; background: #121212; color: #ffffff; display: flex; flex-direction: column; min-height: 100vh; }
-    h1 { font-size: 19px; margin: 0 0 12px 0; color: #4dabf7; display: flex; align-items: center; justify-content: space-between; }
-    .card { background: #1e1e1e; padding: 14px; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.4); }
+    body { margin: 0; padding: 0; height: 100vh; width: 100vw; overflow: hidden; background: #121212; }
+    
+    #map { height: 100%; width: 100%; z-index: 1; }
+    
+    #search-panel { position: absolute; top: 10px; left: 10px; right: 10px; background: rgba(30, 30, 30, 0.95); border-radius: 12px; padding: 12px; z-index: 1000; box-shadow: 0 4px 16px rgba(0,0,0,0.6); backdrop-filter: blur(10px); }
     .toolbar { display: flex; gap: 8px; margin-bottom: 10px; }
-    select { background: #2b2b2b; color: #fff; border: 1px solid #343a40; border-radius: 8px; padding: 10px 8px; font-size: 14px; flex: 1; min-width: 0; }
-    .btn-mini { background: #2b2b2b; color: #adb5bd; border: 1px solid #343a40; border-radius: 8px; padding: 8px 12px; font-size: 13px; cursor: pointer; white-space: nowrap; }
-    .btn-mini:active { background: #343a40; color: #fff; }
-
+    select { background: #2b2b2b; color: #fff; border: 1px solid #495057; border-radius: 8px; padding: 10px 8px; font-size: 14px; flex: 1; min-width: 0; }
     .search-row { display: flex; gap: 8px; }
     .input-wrap { position: relative; display: flex; align-items: center; flex: 1; }
-    input { width: 100%; padding: 13px 36px 13px 12px; font-size: 16px; border-radius: 8px; border: 1px solid #343a40; background: #2b2b2b; color: #fff; }
+    input { width: 100%; padding: 13px 36px 13px 12px; font-size: 16px; border-radius: 8px; border: 1px solid #495057; background: #2b2b2b; color: #fff; }
     input:focus { outline: none; border-color: #4dabf7; }
     .clear-btn { position: absolute; right: 8px; background: none; border: none; color: #868e96; font-size: 18px; cursor: pointer; padding: 4px 6px; display: none; }
     .btn-search { background: #228be6; color: #fff; border: none; border-radius: 8px; padding: 0 16px; font-size: 15px; font-weight: bold; cursor: pointer; white-space: nowrap; }
     .btn-search:active { background: #1c7ed6; }
 
-    .status-bar { font-size: 13px; color: #adb5bd; margin-top: 8px; min-height: 18px; }
+    /* Google Maps 備用按鈕 */
+    .gmap-bar { margin-top: 8px; display: flex; gap: 8px; }
+    .btn-gmap { width: 100%; background: #25262b; color: #a5d8ff; border: 1px solid #373a40; border-radius: 8px; padding: 10px 12px; font-size: 13px; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 6px; }
+    .btn-gmap:active { background: #2c2e33; }
 
-    /* 相似地址下拉清單 */
-    .dropdown { margin-top: 10px; background: #25262b; border: 1px solid #373a40; border-radius: 10px; max-height: 340px; overflow-y: auto; display: none; }
-    .dropdown-item { padding: 11px 12px; border-bottom: 1px solid #2c2e33; display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+    .status-bar { font-size: 13px; color: #adb5bd; margin-top: 10px; min-height: 18px; text-align: center; }
+    .dropdown { margin-top: 8px; background: #25262b; border: 1px solid #495057; border-radius: 10px; max-height: 40vh; overflow-y: auto; display: none; }
+    .dropdown-item { padding: 12px; border-bottom: 1px solid #343a40; display: flex; align-items: center; justify-content: space-between; gap: 8px; cursor: pointer; }
     .dropdown-item:last-child { border-bottom: none; }
-    .item-info { flex: 1; cursor: pointer; min-width: 0; }
-    .item-addr { font-size: 15px; font-weight: 500; color: #f8f9fa; line-height: 1.35; word-break: break-all; }
-    .item-meta { display: flex; align-items: center; gap: 6px; margin-top: 4px; flex-wrap: wrap; }
-    .badge { font-size: 11px; padding: 2px 6px; border-radius: 4px; font-weight: 600; }
-    .badge-exact { background: rgba(43, 138, 62, 0.25); color: #69db7c; border: 1px solid #2b8a3e; }
-    .badge-street { background: rgba(34, 139, 230, 0.2); color: #74c0fc; border: 1px solid #1971c2; }
-    .badge-area { background: rgba(240, 140, 0, 0.2); color: #ffd43b; border: 1px solid #e67700; }
-    .item-coord { font-size: 12px; color: #868e96; }
-    .btn-go { background: #2b8a3e; color: #fff; border: none; border-radius: 8px; padding: 10px 12px; font-size: 14px; font-weight: bold; cursor: pointer; white-space: nowrap; }
-    .btn-go:active { background: #237032; }
+    .dropdown-item:active { background: #2c2e33; }
+    .item-addr { font-size: 15px; font-weight: 500; color: #f8f9fa; line-height: 1.35; }
+    .badge-official { font-size: 11px; padding: 2px 6px; border-radius: 4px; font-weight: 600; background: rgba(43, 138, 62, 0.25); color: #69db7c; border: 1px solid #2b8a3e; margin-top: 4px; display: inline-block;}
+    .badge-fallback { font-size: 11px; padding: 2px 6px; border-radius: 4px; font-weight: 600; background: rgba(240, 140, 0, 0.2); color: #ffd43b; border: 1px solid #e67700; margin-top: 4px; display: inline-block;}
 
-    /* 預覽與微調卡片 */
-    #preview-card { margin-top: 14px; display: none; }
-    .preview-header { display: flex; justify-content: space-between; align-items: flex-start; gap: 8px; margin-bottom: 8px; }
-    .preview-title { font-size: 15px; font-weight: bold; color: #f8f9fa; }
-    .preview-coord { font-size: 13px; color: #4dabf7; font-family: monospace; margin-top: 2px; }
-    #map { height: 220px; width: 100%; border-radius: 8px; border: 1px solid #343a40; z-index: 1; }
-    .map-hint { font-size: 12px; color: #868e96; margin-top: 6px; }
-    .btn-nav-big { width: 100%; background: #2b8a3e; color: #fff; border: none; border-radius: 10px; padding: 14px; font-size: 17px; font-weight: bold; margin-top: 10px; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; }
+    .leaflet-popup-content-wrapper { background: #1e1e1e; color: #fff; border-radius: 12px; }
+    .leaflet-popup-tip { background: #1e1e1e; }
+    .popup-content { text-align: center; padding: 4px 2px; }
+    .popup-addr { font-size: 16px; font-weight: bold; margin-bottom: 4px; color: #f8f9fa; }
+    .popup-coord { font-size: 12px; color: #868e96; margin-bottom: 12px; font-family: monospace; }
+    .btn-nav-big { width: 100%; background: #2b8a3e; color: #fff; border: none; border-radius: 8px; padding: 12px; font-size: 15px; font-weight: bold; cursor: pointer; }
     .btn-nav-big:active { background: #237032; }
 
-    /* 歷史紀錄 */
-    .history { margin-top: 18px; }
-    .history-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
-    .history-title { font-size: 13px; color: #868e96; }
-    .history-item { background: #1e1e1e; padding: 11px 12px; border-radius: 10px; margin-bottom: 8px; display: flex; justify-content: space-between; align-items: center; gap: 10px; }
-    .history-text { font-size: 14px; color: #dee2e6; flex: 1; cursor: pointer; }
+    .locate-btn { position: absolute; bottom: 20px; right: 20px; z-index: 1000; background: #228be6; color: white; border: none; border-radius: 50%; width: 50px; height: 50px; font-size: 24px; box-shadow: 0 4px 10px rgba(0,0,0,0.4); cursor: pointer; display: flex; align-items: center; justify-content: center; }
+    .locate-btn:active { background: #1c7ed6; }
   </style>
 </head>
 <body>
-  <h1>📍 台灣門牌精準座標導航</h1>
 
-  <div class="card">
+  <div id="search-panel">
     <div class="toolbar">
       <select id="city-filter" onchange="onCityChange()"></select>
       <select id="town-filter" onchange="onTownChange()">
         <option value="">不限鄉鎮</option>
       </select>
-      <button class="btn-mini" onclick="pasteClipboard()">📋 貼上</button>
     </div>
-
     <div class="search-row">
       <div class="input-wrap">
-        <input type="text" id="addr" placeholder="輸入路名與門牌，例：中山路12" autocomplete="off" oninput="onInputChange()" onkeydown="if(event.key==='Enter') triggerSearch()">
+        <input type="text" id="addr" placeholder="例：朝昇東路80巷74弄1" autocomplete="off" oninput="onInputChange()" onkeydown="if(event.key==='Enter') triggerSearch()">
         <button class="clear-btn" id="clear-btn" onclick="clearInput()">✕</button>
       </div>
-      <button class="btn-search" onclick="triggerSearch()">🔍 搜尋</button>
+      <button class="btn-search" onclick="triggerSearch()">搜尋</button>
+    </div>
+    
+    <div class="gmap-bar">
+      <button class="btn-gmap" onclick="openGoogleMapsFuzzy()">🗺️ 找不到？改用 Google Maps 搜尋此地址 →</button>
     </div>
 
-    <div class="status-bar" id="status">輸入路名與門牌，即時顯示相似門牌與精準經緯度</div>
-
-    <!-- 即時彈出的相似地址清單 -->
+    <div class="status-bar" id="status">輸入地址，系統將自動為您補齊「號」並精準定位</div>
     <div class="dropdown" id="dropdown"></div>
   </div>
 
-  <!-- 座標預覽與微調區 -->
-  <div class="card" id="preview-card">
-    <div class="preview-header">
-      <div>
-        <div class="preview-title" id="prev-addr">-</div>
-        <div class="preview-coord" id="prev-coord">-</div>
-      </div>
-      <button class="btn-mini" onclick="copyCoord()">複製座標</button>
-    </div>
-    <div id="map"></div>
-    <div class="map-hint">💡 若偏鄉屋舍位置略偏，可直接點擊地圖上的正確屋頂微調紅點</div>
-    <button class="btn-nav-big" onclick="launchSelectedNav()">🧭 傳送此精準座標至 Google Maps 導航</button>
-  </div>
-
-  <div class="history" id="history-section" style="display:none;">
-    <div class="history-header">
-      <span class="history-title">最近導航紀錄</span>
-      <button class="btn-mini" style="padding:4px 8px; font-size:12px;" onclick="clearHistory()">清除紀錄</button>
-    </div>
-    <div id="history-list"></div>
-  </div>
+  <div id="map"></div>
+  <button class="locate-btn" onclick="resetView()">🎯</button>
 
   <script>
     const TW_DATA = {
@@ -134,31 +104,46 @@
       "連江縣": ["南竿鄉","北竿鄉","莒光鄉","東引鄉"]
     };
 
-    let debounceTimer = null;
-    let currentResults = [];
-    let selectedTarget = null;
+
     let map = null;
-    let marker = null;
+    let markerLayer = null;
+    let currentResults = [];
+    let debounceTimer = null;
 
-    // 初始化縣市與鄉鎮選單
-    const citySelect = document.getElementById('city-filter');
-    const townSelect = document.getElementById('town-filter');
-    Object.keys(TW_DATA).forEach(city => {
-      const opt = document.createElement('option');
-      opt.value = city;
-      opt.textContent = city || '全台灣（不限縣市）';
-      citySelect.appendChild(opt);
-    });
+    function init() {
+      const citySelect = document.getElementById('city-filter');
+      const townSelect = document.getElementById('town-filter');
+      Object.keys(TW_DATA).forEach(city => {
+        const opt = document.createElement('option');
+        opt.value = city;
+        opt.textContent = city || '全台灣（不限縣市）';
+        citySelect.appendChild(opt);
+      });
 
-    const savedCity = localStorage.getItem('doorplate_city_v4');
-    citySelect.value = savedCity !== null ? savedCity : '屏東縣';
-    populateTowns(citySelect.value);
-    const savedTown = localStorage.getItem('doorplate_town_v4');
-    if (savedTown && TW_DATA[citySelect.value]?.includes(savedTown)) {
-      townSelect.value = savedTown;
+      citySelect.value = localStorage.getItem('doorplate_city_v10') || '屏東縣';
+      populateTowns(citySelect.value);
+      const savedTown = localStorage.getItem('doorplate_town_v10');
+      if (savedTown && TW_DATA[citySelect.value]?.includes(savedTown)) {
+        townSelect.value = savedTown;
+      }
+
+      map = L.map('map', { zoomControl: false }).setView([22.5505, 120.5435], 14); 
+      
+      // 內政部 EMAP 底圖
+      L.tileLayer('https://wmts.nlsc.gov.tw/wmts/EMAP/default/GoogleMapsCompatible/{z}/{y}/{x}', {
+        maxZoom: 20,
+        attribution: '© 內政部國土測繪中心'
+      }).addTo(map);
+
+      markerLayer = L.featureGroup().addTo(map);
+    }
+
+    function resetView() {
+      map.setView([22.5505, 120.5435], 14);
     }
 
     function populateTowns(city) {
+      const townSelect = document.getElementById('town-filter');
       townSelect.innerHTML = '<option value="">不限鄉鎮</option>';
       (TW_DATA[city] || []).forEach(town => {
         const opt = document.createElement('option');
@@ -169,30 +154,23 @@
     }
 
     function onCityChange() {
-      localStorage.setItem('doorplate_city_v4', citySelect.value);
-      localStorage.setItem('doorplate_town_v4', '');
-      populateTowns(citySelect.value);
-      if (document.getElementById('addr').value.trim().length >= 2) triggerSearch();
+      const city = document.getElementById('city-filter').value;
+      localStorage.setItem('doorplate_city_v10', city);
+      localStorage.setItem('doorplate_town_v10', '');
+      populateTowns(city);
     }
 
     function onTownChange() {
-      localStorage.setItem('doorplate_town_v4', townSelect.value);
-      if (document.getElementById('addr').value.trim().length >= 2) triggerSearch();
-    }
-
-    function normalizeText(str) {
-      return str
-        .replace(/[！-～]/g, ch => String.fromCharCode(ch.charCodeAt(0) - 0xFEE0))
-        .replace(/ /g, ' ')
-        .replace(/\s+/g, '')
-        .trim();
+      localStorage.setItem('doorplate_town_v10', document.getElementById('town-filter').value);
     }
 
     function onInputChange() {
       const input = document.getElementById('addr');
       document.getElementById('clear-btn').style.display = input.value ? 'block' : 'none';
+      
+      // 延長延遲時間至 800ms，避免打字過程中過度呼叫被封鎖
       clearTimeout(debounceTimer);
-      debounceTimer = setTimeout(triggerSearch, 350);
+      debounceTimer = setTimeout(triggerSearch, 800); 
     }
 
     function clearInput() {
@@ -200,301 +178,190 @@
       input.value = '';
       document.getElementById('clear-btn').style.display = 'none';
       document.getElementById('dropdown').style.display = 'none';
-      document.getElementById('status').innerText = '輸入路名與門牌，即時顯示相似門牌與精準經緯度';
+      document.getElementById('status').innerText = '輸入地址，系統將自動為您補齊「號」並精準定位';
+      markerLayer.clearLayers();
       input.focus();
     }
 
-    async function pasteClipboard() {
-      try {
-        const text = await navigator.clipboard.readText();
-        if (text) {
-          document.getElementById('addr').value = text.trim();
-          document.getElementById('clear-btn').style.display = 'block';
-          triggerSearch();
+    // 多重 Proxy 輪替機制，確保一定能穿透 CORS 限制
+    async function fetchNLSCWithFallback(queryStr) {
+      const targetUrl = `https://api.nlsc.gov.tw/idc/TextQueryMap/${encodeURIComponent(queryStr)}/10`;
+      
+      const proxies = [
+        { url: `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(targetUrl)}`, type: 'text' },
+        { url: `https://api.allorigins.win/get?url=${encodeURIComponent(targetUrl)}`, type: 'json' },
+        { url: `https://corsproxy.io/?${encodeURIComponent(targetUrl)}`, type: 'text' }
+      ];
+
+      for (let proxy of proxies) {
+        try {
+          const controller = new AbortController();
+          const timeoutId = setTimeout(() => controller.abort(), 4000);
+          
+          const res = await fetch(proxy.url, { signal: controller.signal, cache: 'no-store' });
+          clearTimeout(timeoutId);
+          
+          if (!res.ok) continue;
+
+          let xmlStr = '';
+          if (proxy.type === 'json') {
+            const data = await res.json();
+            if (!data.contents) continue;
+            xmlStr = data.contents;
+          } else {
+            xmlStr = await res.text();
+          }
+
+          if (xmlStr.includes('<ITEM>')) {
+            const parser = new DOMParser();
+            const xml = parser.parseFromString(xmlStr, "text/xml");
+            const items = Array.from(xml.getElementsByTagName("ITEM"));
+            return items.map(item => {
+              const content = item.getElementsByTagName("CONTENT")[0]?.textContent || '';
+              const location = item.getElementsByTagName("LOCATION")[0]?.textContent || '';
+              const [lng, lat] = location.split(',');
+              return {
+                addr: content,
+                lat: parseFloat(lat).toFixed(6),
+                lng: parseFloat(lng).toFixed(6),
+                source: 'official'
+              };
+            }).filter(i => i.lat && i.lng && !isNaN(i.lat));
+          }
+        } catch (e) {
+          console.warn('Proxy failed, trying next...', e);
+          continue;
         }
+      }
+      return []; // 若全部失敗回傳空陣列
+    }
+
+    // 備用圖資引擎（用於官方系統連線異常時）
+    async function fetchArcGIS(fullQuery) {
+      try {
+        const url = `https://geocode.arcgis.com/arcgis/rest/services/World/GeocodeServer/findAddressCandidates?SingleLine=${encodeURIComponent(fullQuery)}&countryCode=TWN&outFields=Match_addr,Addr_type&maxLocations=5&f=json`;
+        const res = await fetch(url);
+        const data = await res.json();
+        return (data.candidates || []).map(c => ({
+          addr: c.address,
+          lat: Number(c.location.y).toFixed(6),
+          lng: Number(c.location.x).toFixed(6),
+          source: 'fallback'
+        }));
       } catch (e) {
-        document.getElementById('status').innerText = '請長按輸入框貼上地址';
+        return [];
       }
-    }
-
-    // 來源一：ArcGIS/HERE 台灣門牌模糊建議 + 精準座標查詢
-    async function queryArcGIS(fullQuery) {
-      const base = 'https://geocode.arcgis.com/arcgis/rest/services/World/GeocodeServer';
-      const results = [];
-
-      // 1. 直接比對候選門牌
-      const candUrl = `${base}/findAddressCandidates?SingleLine=${encodeURIComponent(fullQuery)}&countryCode=TWN&outFields=Match_addr,Addr_type&maxLocations=12&f=json`;
-      // 2. 模糊自動完成建議 (針對只打一半路名或少打「號」字)
-      const sugUrl = `${base}/suggest?text=${encodeURIComponent(fullQuery)}&countryCode=TWN&category=Address&maxLocations=8&f=json`;
-
-      const [candRes, sugRes] = await Promise.allSettled([
-        fetch(candUrl).then(r => r.json()),
-        fetch(sugUrl).then(r => r.json())
-      ]);
-
-      if (candRes.status === 'fulfilled' && candRes.value?.candidates) {
-        candRes.value.candidates.forEach(c => {
-          if (c.location && c.address) {
-            results.push({
-              addr: c.address,
-              lat: Number(c.location.y).toFixed(6),
-              lng: Number(c.location.x).toFixed(6),
-              type: c.attributes?.Addr_type || '',
-              score: c.score || 0
-            });
-          }
-        });
-      }
-
-      // 若候選太少，把 suggest 的前 5 筆建議展開成實際經緯度
-      if (sugRes.status === 'fulfilled' && sugRes.value?.suggestions?.length) {
-        const topSugs = sugRes.value.suggestions.slice(0, 5);
-        const resolved = await Promise.allSettled(topSugs.map(s =>
-          fetch(`${base}/findAddressCandidates?SingleLine=${encodeURIComponent(s.text)}&magicKey=${encodeURIComponent(s.magicKey)}&countryCode=TWN&outFields=Match_addr,Addr_type&f=json`).then(r => r.json())
-        ));
-        resolved.forEach(r => {
-          if (r.status === 'fulfilled' && r.value?.candidates?.[0]) {
-            const c = r.value.candidates[0];
-            results.push({
-              addr: c.address,
-              lat: Number(c.location.y).toFixed(6),
-              lng: Number(c.location.x).toFixed(6),
-              type: c.attributes?.Addr_type || '',
-              score: c.score || 0
-            });
-          }
-        });
-      }
-
-      return results;
-    }
-
-    // 來源二：OpenStreetMap 台灣門牌庫補充
-    async function queryNominatim(fullQuery) {
-      const url = `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(fullQuery)}&countrycodes=tw&format=jsonv2&addressdetails=1&limit=8`;
-      const res = await fetch(url, { headers: { 'Accept-Language': 'zh-TW' } });
-      const data = await res.json();
-      return (data || []).map(item => {
-        const a = item.address || {};
-        const city = a.city || a.county || '';
-        const town = a.town || a.suburb || a.district || '';
-        const road = a.road || '';
-        const house = a.house_number ? `${a.house_number}號` : '';
-        const cleanAddr = (city + town + road + house) || item.display_name.split(',').slice(0, 3).reverse().join('');
-        return {
-          addr: cleanAddr,
-          lat: Number(item.lat).toFixed(6),
-          lng: Number(item.lon).toFixed(6),
-          type: a.house_number ? 'PointAddress' : 'StreetName',
-          score: a.house_number ? 95 : 70
-        };
-      });
     }
 
     async function triggerSearch() {
-      const raw = normalizeText(document.getElementById('addr').value);
-      const city = citySelect.value;
-      const town = townSelect.value;
+      let raw = document.getElementById('addr').value
+        .replace(/[！-～]/g, ch => String.fromCharCode(ch.charCodeAt(0) - 0xFEE0))
+        .replace(/\s+/g, '').trim();
+
+      const city = document.getElementById('city-filter').value;
+      const town = document.getElementById('town-filter').value;
       const status = document.getElementById('status');
       const dropdown = document.getElementById('dropdown');
 
       if (raw.length < 2) {
-        status.innerText = '請輸入至少 2 個字（例如：中山路12）';
-        dropdown.style.display = 'none';
+        status.innerText = '請輸入門牌地址（例如：朝昇東路80巷74弄1）';
         return;
       }
 
-      // 組合搜尋詞（避免重複加上使用者已經打進去的縣市鄉鎮）
-      let prefix = '';
-      if (city && !raw.includes(city) && !raw.includes(city.replace('台', '臺'))) prefix += city;
-      if (town && !raw.includes(town) && !raw.includes(town.replace('台', '臺'))) prefix += town;
-      const fullQuery = prefix + raw;
+      // 核心修正：自動偵測若結尾是數字且沒有「號」字，自動補上
+      // 這樣輸入「74弄1」就會自動變成「74弄1號」，內政部系統才查得到
+      if (/\d$/.test(raw)) {
+        raw += '號';
+      }
 
-      status.innerText = `正在比對「${fullQuery}」的門牌座標...`;
+      let queryStr = raw;
+      if (city && !raw.includes(city)) queryStr = city + queryStr;
+      if (town && !raw.includes(town)) queryStr = queryStr.replace(city, city + town);
+
+      status.innerText = `正在向內政部資料庫嚴格查詢「${queryStr}」...`;
+      dropdown.style.display = 'none';
+      markerLayer.clearLayers();
 
       try {
-        const [arcRes, osmRes] = await Promise.allSettled([
-          queryArcGIS(fullQuery),
-          queryNominatim(fullQuery)
-        ]);
-
-        const combined = [
-          ...(arcRes.status === 'fulfilled' ? arcRes.value : []),
-          ...(osmRes.status === 'fulfilled' ? osmRes.value : [])
-        ];
-
-        // 過濾縣市鄉鎮並去重（相同地址或座標極近者合併）
-        const dedup = [];
-        for (const item of combined) {
-          if (!item.lat || !item.lng || isNaN(item.lat)) continue;
-          if (city) {
-            const cAlt = city.replace('台', '臺');
-            if (!item.addr.includes(city) && !item.addr.includes(cAlt)) continue;
-          }
-          if (town) {
-            const tAlt = town.replace('台', '臺');
-            if (!item.addr.includes(town) && !item.addr.includes(tAlt)) continue;
-          }
-          const isDup = dedup.some(d =>
-            d.addr === item.addr ||
-            (Math.abs(d.lat - item.lat) < 0.00005 && Math.abs(d.lng - item.lng) < 0.00005)
-          );
-          if (!isDup) dedup.push(item);
+        // 先嘗試官方多重代理系統
+        let results = await fetchNLSCWithFallback(queryStr);
+        
+        // 若官方系統真的掛了或查無資料，啟動民間圖資備援
+        if (results.length === 0) {
+          status.innerText = `官方圖資查無結果，切換至民間圖資比對...`;
+          results = await fetchArcGIS(queryStr);
         }
 
-        // 依精準度排序：PointAddress > StreetAddress > 其他
-        const rank = t => (t === 'PointAddress' || t === 'Subaddress') ? 0 : (t === 'StreetAddress' ? 1 : 2);
-        dedup.sort((a, b) => rank(a.type) - rank(b.type) || b.score - a.score);
-
-        currentResults = dedup.slice(0, 15);
+        currentResults = results;
 
         if (currentResults.length === 0) {
-          dropdown.style.display = 'none';
-          status.innerText = `找不到「${fullQuery}」的門牌，試著把鄉鎮改為「不限鄉鎮」或只打路名`;
+          status.innerText = '所有圖資皆查無此門牌，建議直接點擊下方改用 Google Maps 模糊搜尋';
         } else {
-          status.innerText = `找到 ${currentResults.length} 筆結果（點地址可預覽地圖，點綠色直接導航）：`;
+          status.innerText = `找到 ${currentResults.length} 筆門牌，請在下方點選定位`;
           renderDropdown();
         }
       } catch (e) {
-        status.innerText = `查詢發生錯誤：${e.message}`;
+        status.innerText = '查詢發生錯誤，請檢查網路連線或稍後再試';
       }
-    }
-
-    function getBadgeHtml(type) {
-      if (type === 'PointAddress' || type === 'Subaddress') {
-        return '<span class="badge badge-exact">🎯 精準門牌</span>';
-      }
-      if (type === 'StreetAddress') {
-        return '<span class="badge badge-street">🛣️ 路段門牌</span>';
-      }
-      return '<span class="badge badge-area">📍 路段概略</span>';
     }
 
     function renderDropdown() {
       const dropdown = document.getElementById('dropdown');
-      dropdown.innerHTML = currentResults.map((item, idx) => `
-        <div class="dropdown-item">
-          <div class="item-info" onclick="previewLocation(${idx})">
-            <div class="item-addr">${item.addr}</div>
-            <div class="item-meta">
-              ${getBadgeHtml(item.type)}
-              <span class="item-coord">${item.lat}, ${item.lng}</span>
+      dropdown.innerHTML = currentResults.map((item, idx) => {
+        const badge = item.source === 'official' 
+          ? '<div class="badge-official">🎯 官方內政部精準圖資</div>'
+          : '<div class="badge-fallback">📍 民間圖資概略位置</div>';
+          
+        return `
+          <div class="dropdown-item" onclick="focusOnMap(${idx})">
+            <div>
+              <div class="item-addr">${item.addr}</div>
+              ${badge}
             </div>
           </div>
-          <button class="btn-go" onclick="directNav(${idx})">🧭 導航</button>
-        </div>
-      `).join('');
+        `;
+      }).join('');
       dropdown.style.display = 'block';
     }
 
-    function directNav(idx) {
+    function focusOnMap(idx) {
       const item = currentResults[idx];
       if (!item) return;
-      saveHistory(item);
-      openGoogleMapsCoord(item.lat, item.lng);
+      
+      document.getElementById('dropdown').style.display = 'none';
+      document.getElementById('status').innerText = `📍已定位：${item.addr}`;
+
+      markerLayer.clearLayers();
+      const marker = L.marker([item.lat, item.lng]).addTo(markerLayer);
+      
+      const popupContent = `
+        <div class="popup-content">
+          <div class="popup-addr">${item.addr}</div>
+          <div class="popup-coord">${item.lat}, ${item.lng}</div>
+          <button class="btn-nav-big" onclick="launchGoogleMaps(${item.lat}, ${item.lng})">
+            🧭 傳送至 Google Maps 導航
+          </button>
+        </div>
+      `;
+      
+      marker.bindPopup(popupContent, { minWidth: 220 }).openPopup();
+      map.flyTo([item.lat, item.lng], 19, { animate: true, duration: 1 });
     }
 
-    function previewLocation(idx) {
-      const item = currentResults[idx];
-      if (!item) return;
-      selectedTarget = { ...item };
-      showPreviewCard();
-    }
-
-    function showPreviewCard() {
-      if (!selectedTarget) return;
-      const card = document.getElementById('preview-card');
-      card.style.display = 'block';
-      document.getElementById('prev-addr').innerText = selectedTarget.addr;
-      document.getElementById('prev-coord').innerText = `${selectedTarget.lat}, ${selectedTarget.lng}`;
-
-      const lat = parseFloat(selectedTarget.lat);
-      const lng = parseFloat(selectedTarget.lng);
-
-      if (!map) {
-        map = L.map('map').setView([lat, lng], 18);
-        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-          maxZoom: 19,
-          attribution: '© OpenStreetMap'
-        }).addTo(map);
-        marker = L.marker([lat, lng], { draggable: true }).addTo(map);
-
-        marker.on('dragend', () => {
-          const pos = marker.getLatLng();
-          updateSelectedCoord(pos.lat, pos.lng);
-        });
-        map.on('click', (e) => {
-          marker.setLatLng(e.latlng);
-          updateSelectedCoord(e.latlng.lat, e.latlng.lng);
-        });
-      } else {
-        setTimeout(() => {
-          map.invalidateSize();
-          map.setView([lat, lng], 18);
-          marker.setLatLng([lat, lng]);
-        }, 50);
-      }
-      card.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-    }
-
-    function updateSelectedCoord(lat, lng) {
-      selectedTarget.lat = lat.toFixed(6);
-      selectedTarget.lng = lng.toFixed(6);
-      document.getElementById('prev-coord').innerText = `${selectedTarget.lat}, ${selectedTarget.lng} (已手動微調)`;
-    }
-
-    function copyCoord() {
-      if (!selectedTarget) return;
-      const text = `${selectedTarget.lat}, ${selectedTarget.lng}`;
-      navigator.clipboard?.writeText(text);
-      document.getElementById('prev-coord').innerText = `${text} (已複製!)`;
-    }
-
-    function launchSelectedNav() {
-      if (!selectedTarget) return;
-      saveHistory(selectedTarget);
-      openGoogleMapsCoord(selectedTarget.lat, selectedTarget.lng);
-    }
-
-    // 直接把純數字經緯度傳給 Google Maps，不讓 Google Maps 重新猜測地址
-    function openGoogleMapsCoord(lat, lng) {
+    function launchGoogleMaps(lat, lng) {
       const navUrl = `https://www.google.com/maps/dir/?api=1&destination=${lat},${lng}&travelmode=driving`;
       window.open(navUrl, '_blank');
     }
 
-    function saveHistory(item) {
-      let list = JSON.parse(localStorage.getItem('doorplate_history_v4') || '[]');
-      list = [item, ...list.filter(i => i.addr !== item.addr)].slice(0, 6);
-      localStorage.setItem('doorplate_history_v4', JSON.stringify(list));
-      renderHistory();
+    function openGoogleMapsFuzzy() {
+      let raw = document.getElementById('addr').value.trim();
+      const city = document.getElementById('city-filter').value;
+      const town = document.getElementById('town-filter').value;
+      const q = encodeURIComponent(`${city}${town}${raw}`);
+      window.open(`https://www.google.com/maps/search/?api=1&query=${q}`, '_blank');
     }
 
-    function clearHistory() {
-      localStorage.removeItem('doorplate_history_v4');
-      renderHistory();
-    }
-
-    function renderHistory() {
-      const list = JSON.parse(localStorage.getItem('doorplate_history_v4') || '[]');
-      const sec = document.getElementById('history-section');
-      const container = document.getElementById('history-list');
-      if (list.length === 0) {
-        sec.style.display = 'none';
-        return;
-      }
-      sec.style.display = 'block';
-      container.innerHTML = list.map(item => `
-        <div class="history-item">
-          <div class="history-text" onclick="openGoogleMapsCoord('${item.lat}', '${item.lng}')">
-            <div>${item.addr}</div>
-            <div style="font-size:12px; color:#868e96;">${item.lat}, ${item.lng}</div>
-          </div>
-          <button class="btn-go" style="padding:7px 12px; font-size:13px;" onclick="openGoogleMapsCoord('${item.lat}', '${item.lng}')">導航</button>
-        </div>
-      `).join('');
-    }
-
-    renderHistory();
+    window.onload = init;
   </script>
 </body>
 </html>
