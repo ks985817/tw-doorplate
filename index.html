@@ -23,7 +23,6 @@
     .btn-search { background: #228be6; color: #fff; border: none; border-radius: 8px; padding: 0 16px; font-size: 15px; font-weight: bold; cursor: pointer; white-space: nowrap; }
     .btn-search:active { background: #1c7ed6; }
 
-    /* Google Maps 備用按鈕 */
     .gmap-bar { margin-top: 8px; display: flex; gap: 8px; }
     .btn-gmap { width: 100%; background: #25262b; color: #a5d8ff; border: 1px solid #373a40; border-radius: 8px; padding: 10px 12px; font-size: 13px; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 6px; }
     .btn-gmap:active { background: #2c2e33; }
@@ -60,17 +59,17 @@
     </div>
     <div class="search-row">
       <div class="input-wrap">
-        <input type="text" id="addr" placeholder="例：朝昇東路80巷74弄1" autocomplete="off" oninput="onInputChange()" onkeydown="if(event.key==='Enter') triggerSearch()">
+        <input type="text" id="addr" placeholder="例：通潮二巷33-1 或 33之1" autocomplete="off" oninput="onInputChange()" onkeydown="if(event.key==='Enter') triggerSearch()">
         <button class="clear-btn" id="clear-btn" onclick="clearInput()">✕</button>
       </div>
       <button class="btn-search" onclick="triggerSearch()">搜尋</button>
     </div>
     
     <div class="gmap-bar">
-      <button class="btn-gmap" onclick="openGoogleMapsFuzzy()">🗺️ 找不到？改用 Google Maps 搜尋此地址 →</button>
+      <button class="btn-gmap" onclick="openGoogleMapsFuzzy()">🗺️ 找不到？改用 Google Maps 模糊搜尋此地址 →</button>
     </div>
 
-    <div class="status-bar" id="status">輸入地址，系統將自動為您補齊「號」並精準定位</div>
+    <div class="status-bar" id="status">支援「-」或「之」混合查詢，自動展開相關門牌</div>
     <div class="dropdown" id="dropdown"></div>
   </div>
 
@@ -82,33 +81,14 @@
       "": [],
       "屏東縣": ["屏東市","潮州鎮","東港鎮","恆春鎮","萬丹鄉","長治鄉","麟洛鄉","九如鄉","里港鄉","鹽埔鄉","高樹鄉","萬巒鄉","內埔鄉","竹田鄉","新埤鄉","枋寮鄉","新園鄉","崁頂鄉","林邊鄉","南州鄉","佳冬鄉","琉球鄉","車城鄉","滿州鄉","枋山鄉","三地門鄉","霧臺鄉","瑪家鄉","泰武鄉","來義鄉","春日鄉","獅子鄉","牡丹鄉"],
       "高雄市": ["楠梓區","左營區","鼓山區","三民區","鹽埕區","前金區","新興區","苓雅區","前鎮區","旗津區","小港區","鳳山區","林園區","大寮區","大樹區","大社區","仁武區","鳥松區","岡山區","橋頭區","燕巢區","田寮區","阿蓮區","路竹區","湖內區","茄萣區","永安區","彌陀區","梓官區","旗山區","美濃區","六龜區","甲仙區","杉林區","內門區","茂林區","桃源區","那瑪夏區"],
-      "台南市": ["中西區","東區","南區","北區","安平區","安南區","永康區","歸仁區","新化區","左鎮區","玉井區","楠西區","南化區","仁德區","關廟區","龍崎區","官田區","麻豆區","佳里區","西港區","七股區","將軍區","學甲區","北門區","新營區","後壁區","白河區","東山區","六甲區","下營區","柳營區","鹽水區","善化區","大內區","山上區","新市區","安定區"],
-      "嘉義縣": ["太保市","朴子市","布袋鎮","大林鎮","民雄鄉","溪口鄉","新港鄉","六腳鄉","東石鄉","義竹鄉","鹿草鄉","水上鄉","中埔鄉","竹崎鄉","梅山鄉","番路鄉","大埔鄉","阿里山鄉"],
-      "嘉義市": ["東區","西區"],
-      "雲林縣": ["斗六市","斗南鎮","虎尾鎮","西螺鎮","土庫鎮","北港鎮","古坑鄉","大埤鄉","莿桐鄉","林內鄉","二崙鄉","崙背鄉","麥寮鄉","東勢鄉","褒忠鄉","臺西鄉","元長鄉","四湖鄉","口湖鄉","水林鄉"],
-      "彰化縣": ["彰化市","鹿港鎮","和美鎮","線西鄉","伸港鄉","福興鄉","秀水鄉","花壇鄉","芬園鄉","員林市","溪湖鎮","田中鎮","大村鄉","埔鹽鄉","埔心鄉","永靖鄉","社頭鄉","二水鄉","北斗鎮","二林鎮","田尾鄉","埤頭鄉","芳苑鄉","大城鄉","竹塘鄉","溪州鄉"],
-      "台中市": ["中區","東區","南區","西區","北區","北屯區","西屯區","南屯區","太平區","大里區","霧峰區","烏日區","豐原區","后里區","石岡區","東勢區","和平區","新社區","潭子區","大雅區","神岡區","大肚區","沙鹿區","龍井區","梧棲區","清水區","大甲區","外埔區","大安區"],
-      "南投縣": ["南投市","埔里鎮","草屯鎮","竹山鎮","集集鎮","名間鄉","鹿谷鄉","中寮鄉","魚池鄉","國姓鄉","水里鄉","信義鄉","仁愛鄉"],
-      "苗栗縣": ["苗栗市","頭份市","苑裡鎮","通霄鎮","竹南鎮","後龍鎮","卓蘭鎮","大湖鄉","公館鄉","銅鑼鄉","南庄鄉","頭屋鄉","三義鄉","西湖鄉","造橋鄉","三灣鄉","獅潭鄉","泰安鄉"],
-      "新竹縣": ["竹北市","竹東鎮","新埔鎮","關西鎮","湖口鄉","新豐鄉","芎林鄉","橫山鄉","北埔鄉","寶山鄉","峨眉鄉","尖石鄉","五峰鄉"],
-      "新竹市": ["東區","北區","香山區"],
-      "桃園市": ["桃園區","中壢區","平鎮區","八德區","楊梅區","蘆竹區","大溪區","龍潭區","龜山區","大園區","觀音區","新屋區","復興區"],
-      "新北市": ["板橋區","三重區","中和區","永和區","新莊區","新店區","樹林區","鶯歌區","三峽區","淡水區","汐止區","瑞芳區","土城區","蘆洲區","五股區","泰山區","林口區","深坑區","石碇區","坪林區","三芝區","石門區","八里區","平溪區","雙溪區","貢寮區","金山區","萬里區","烏來區"],
-      "台北市": ["中正區","大同區","中山區","松山區","大安區","萬華區","信義區","士林區","北投區","內湖區","南港區","文山區"],
-      "基隆市": ["仁愛區","信義區","中正區","中山區","安樂區","暖暖區","七堵區"],
-      "宜蘭縣": ["宜蘭市","羅東鎮","蘇澳鎮","頭城鎮","礁溪鄉","壯圍鄉","員山鄉","冬山鄉","五結鄉","三星鄉","大同鄉","南澳鄉"],
-      "花蓮縣": ["花蓮市","鳳林鎮","玉里鎮","新城鄉","吉安鄉","壽豐鄉","光復鄉","豐濱鄉","瑞穗鄉","富里鄉","秀林鄉","萬榮鄉","卓溪鄉"],
-      "台東縣": ["臺東市","成功鎮","關山鎮","卑南鄉","鹿野鄉","池上鄉","東河鄉","長濱鄉","太麻里鄉","大武鄉","綠島鄉","海端鄉","延平鄉","金峰鄉","達仁鄉","蘭嶼鄉"],
-      "澎湖縣": ["馬公市","湖西鄉","白沙鄉","西嶼鄉","望安鄉","七美鄉"],
-      "金門縣": ["金城鎮","金湖鎮","金沙鎮","金寧鄉","烈嶼鄉","烏坵鄉"],
-      "連江縣": ["南竿鄉","北竿鄉","莒光鄉","東引鄉"]
+      "台南市": ["中西區","東區","南區","北區","安平區","安南區","永康區","歸仁區","新化區","左鎮區","玉井區","楠西區","南化區","仁德區","關廟區","龍崎區","官田區","麻豆區","佳里區","西港區","七股區","將軍區","學甲區","北門區","新營區","後壁區","白河區","東山區","六甲區","下營區","柳營區","鹽水區","善化區","大內區","山上區","新市區","安定區"]
     };
-
 
     let map = null;
     let markerLayer = null;
     let currentResults = [];
     let debounceTimer = null;
+    let currentSearchId = 0;
 
     function init() {
       const citySelect = document.getElementById('city-filter');
@@ -120,16 +100,14 @@
         citySelect.appendChild(opt);
       });
 
-      citySelect.value = localStorage.getItem('doorplate_city_v10') || '屏東縣';
+      citySelect.value = localStorage.getItem('doorplate_city_v13') || '屏東縣';
       populateTowns(citySelect.value);
-      const savedTown = localStorage.getItem('doorplate_town_v10');
+      const savedTown = localStorage.getItem('doorplate_town_v13');
       if (savedTown && TW_DATA[citySelect.value]?.includes(savedTown)) {
         townSelect.value = savedTown;
       }
 
       map = L.map('map', { zoomControl: false }).setView([22.5505, 120.5435], 14); 
-      
-      // 內政部 EMAP 底圖
       L.tileLayer('https://wmts.nlsc.gov.tw/wmts/EMAP/default/GoogleMapsCompatible/{z}/{y}/{x}', {
         maxZoom: 20,
         attribution: '© 內政部國土測繪中心'
@@ -155,22 +133,20 @@
 
     function onCityChange() {
       const city = document.getElementById('city-filter').value;
-      localStorage.setItem('doorplate_city_v10', city);
-      localStorage.setItem('doorplate_town_v10', '');
+      localStorage.setItem('doorplate_city_v13', city);
+      localStorage.setItem('doorplate_town_v13', '');
       populateTowns(city);
     }
 
     function onTownChange() {
-      localStorage.setItem('doorplate_town_v10', document.getElementById('town-filter').value);
+      localStorage.setItem('doorplate_town_v13', document.getElementById('town-filter').value);
     }
 
     function onInputChange() {
       const input = document.getElementById('addr');
       document.getElementById('clear-btn').style.display = input.value ? 'block' : 'none';
-      
-      // 延長延遲時間至 800ms，避免打字過程中過度呼叫被封鎖
       clearTimeout(debounceTimer);
-      debounceTimer = setTimeout(triggerSearch, 800); 
+      debounceTimer = setTimeout(triggerSearch, 650); 
     }
 
     function clearInput() {
@@ -178,69 +154,69 @@
       input.value = '';
       document.getElementById('clear-btn').style.display = 'none';
       document.getElementById('dropdown').style.display = 'none';
-      document.getElementById('status').innerText = '輸入地址，系統將自動為您補齊「號」並精準定位';
+      document.getElementById('status').innerText = '支援「-」或「之」混合查詢，自動展開相關門牌';
       markerLayer.clearLayers();
       input.focus();
     }
 
-    // 多重 Proxy 輪替機制，確保一定能穿透 CORS 限制
-    async function fetchNLSCWithFallback(queryStr) {
-      const targetUrl = `https://api.nlsc.gov.tw/idc/TextQueryMap/${encodeURIComponent(queryStr)}/10`;
-      
-      const proxies = [
-        { url: `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(targetUrl)}`, type: 'text' },
-        { url: `https://api.allorigins.win/get?url=${encodeURIComponent(targetUrl)}`, type: 'json' },
-        { url: `https://corsproxy.io/?${encodeURIComponent(targetUrl)}`, type: 'text' }
-      ];
-
-      for (let proxy of proxies) {
-        try {
-          const controller = new AbortController();
-          const timeoutId = setTimeout(() => controller.abort(), 4000);
-          
-          const res = await fetch(proxy.url, { signal: controller.signal, cache: 'no-store' });
-          clearTimeout(timeoutId);
-          
-          if (!res.ok) continue;
-
-          let xmlStr = '';
-          if (proxy.type === 'json') {
-            const data = await res.json();
-            if (!data.contents) continue;
-            xmlStr = data.contents;
-          } else {
-            xmlStr = await res.text();
-          }
-
-          if (xmlStr.includes('<ITEM>')) {
-            const parser = new DOMParser();
-            const xml = parser.parseFromString(xmlStr, "text/xml");
-            const items = Array.from(xml.getElementsByTagName("ITEM"));
-            return items.map(item => {
-              const content = item.getElementsByTagName("CONTENT")[0]?.textContent || '';
-              const location = item.getElementsByTagName("LOCATION")[0]?.textContent || '';
-              const [lng, lat] = location.split(',');
-              return {
-                addr: content,
-                lat: parseFloat(lat).toFixed(6),
-                lng: parseFloat(lng).toFixed(6),
-                source: 'official'
-              };
-            }).filter(i => i.lat && i.lng && !isNaN(i.lat));
-          }
-        } catch (e) {
-          console.warn('Proxy failed, trying next...', e);
-          continue;
-        }
+    // 將地址拆分成「路名/巷名」與「門牌號碼」，並處理 "33-1" -> "33之1"
+    function parseAddressParts(raw) {
+      const match = raw.match(/^(.*?(?:路|街|大道|巷|弄|段))(.*)$/);
+      if (match) {
+        let numPart = match[2].replace(/號.*$/, '').replace(/-/g, '之').trim();
+        return { roadPart: match[1], numPart };
       }
-      return []; // 若全部失敗回傳空陣列
+      return { roadPart: raw, numPart: '' };
     }
 
-    // 備用圖資引擎（用於官方系統連線異常時）
-    async function fetchArcGIS(fullQuery) {
+    async function fetchWithTimeout(url, timeoutMs = 3000) {
+      const controller = new AbortController();
+      const timer = setTimeout(() => controller.abort(), timeoutMs);
       try {
-        const url = `https://geocode.arcgis.com/arcgis/rest/services/World/GeocodeServer/findAddressCandidates?SingleLine=${encodeURIComponent(fullQuery)}&countryCode=TWN&outFields=Match_addr,Addr_type&maxLocations=5&f=json`;
-        const res = await fetch(url);
+        return await fetch(url, { signal: controller.signal, cache: 'no-store' });
+      } finally {
+        clearTimeout(timer);
+      }
+    }
+
+    // 引擎一：向內政部索取圖資 (Proxy 競速)
+    async function fetchNLSC(queryStr, limit = 50) {
+      const targetUrl = `https://api.nlsc.gov.tw/idc/TextQueryMap/${encodeURIComponent(queryStr)}/${limit}`;
+      const proxies = [
+        { url: `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(targetUrl)}`, type: 'text' },
+        { url: `https://corsproxy.io/?${encodeURIComponent(targetUrl)}`, type: 'text' },
+        { url: `https://api.allorigins.win/get?url=${encodeURIComponent(targetUrl)}`, type: 'json' }
+      ];
+
+      try {
+        const fastest = await Promise.any(proxies.map(async (proxy) => {
+          const res = await fetchWithTimeout(proxy.url, 3500);
+          if (!res.ok) throw new Error('Bad proxy');
+          let xmlStr = proxy.type === 'json' ? (await res.json()).contents : await res.text();
+          if (!xmlStr || !xmlStr.includes('<ITEM>')) return [];
+          
+          const xml = new DOMParser().parseFromString(xmlStr, "text/xml");
+          return Array.from(xml.getElementsByTagName("ITEM")).map(item => {
+            const [lng, lat] = (item.getElementsByTagName("LOCATION")[0]?.textContent || '').split(',');
+            return {
+              addr: item.getElementsByTagName("CONTENT")[0]?.textContent || '',
+              lat: parseFloat(lat).toFixed(6),
+              lng: parseFloat(lng).toFixed(6),
+              source: 'official'
+            };
+          }).filter(i => i.lat && i.lng && !isNaN(i.lat));
+        }));
+        return fastest || [];
+      } catch (e) {
+        return [];
+      }
+    }
+
+    // 引擎二：民間圖資直連備援
+    async function fetchArcGISFallback(fullQuery) {
+      try {
+        const url = `https://geocode.arcgis.com/arcgis/rest/services/World/GeocodeServer/findAddressCandidates?SingleLine=${encodeURIComponent(fullQuery)}&countryCode=TWN&outFields=Match_addr,Addr_type&maxLocations=10&f=json`;
+        const res = await fetchWithTimeout(url, 3000);
         const data = await res.json();
         return (data.candidates || []).map(c => ({
           addr: c.address,
@@ -264,44 +240,109 @@
       const dropdown = document.getElementById('dropdown');
 
       if (raw.length < 2) {
-        status.innerText = '請輸入門牌地址（例如：朝昇東路80巷74弄1）';
+        status.innerText = '請繼續輸入...';
         return;
       }
 
-      // 核心修正：自動偵測若結尾是數字且沒有「號」字，自動補上
-      // 這樣輸入「74弄1」就會自動變成「74弄1號」，內政部系統才查得到
-      if (/\d$/.test(raw)) {
-        raw += '號';
+      const searchId = ++currentSearchId;
+      const startTime = performance.now();
+
+      let prefix = '';
+      if (city && !raw.includes(city)) prefix += city;
+      if (town && !raw.includes(town)) prefix += town;
+      
+      const { roadPart, numPart } = parseAddressParts(raw);
+      
+      // 組合查詢字串
+      const qBaseLane = prefix + roadPart; 
+      
+      // 針對「之」的特殊處理：產生兩種不同格式的字串去政府資料庫碰運氣
+      // 如果打 33之1，會產生 "33之1" 以及 "33號之1"
+      let exactQueries = [];
+      if (numPart) {
+        exactQueries.push(prefix + roadPart + numPart); // "通潮二巷33之1"
+        if (numPart.includes('之')) {
+          exactQueries.push(prefix + roadPart + numPart.replace('之', '號之')); // "通潮二巷33號之1"
+        }
       }
 
-      let queryStr = raw;
-      if (city && !raw.includes(city)) queryStr = city + queryStr;
-      if (town && !raw.includes(town)) queryStr = queryStr.replace(city, city + town);
-
-      status.innerText = `正在向內政部資料庫嚴格查詢「${queryStr}」...`;
+      status.innerText = `[深度檢索中] 正在掃描「${qBaseLane}」所有關聯門牌...`;
       dropdown.style.display = 'none';
       markerLayer.clearLayers();
 
       try {
-        // 先嘗試官方多重代理系統
-        let results = await fetchNLSCWithFallback(queryStr);
+        const tasks = [
+          fetchNLSC(qBaseLane, 50), // 先抓整條巷子 50 筆墊底，包含這條巷子的 1號, 3號, 33號
+          fetchArcGISFallback(prefix + raw)
+        ];
         
-        // 若官方系統真的掛了或查無資料，啟動民間圖資備援
-        if (results.length === 0) {
-          status.innerText = `官方圖資查無結果，切換至民間圖資比對...`;
-          results = await fetchArcGIS(queryStr);
+        // 將不同格式的精確號碼一併發出請求
+        exactQueries.forEach(q => tasks.push(fetchNLSC(q, 5)));
+
+        const settled = await Promise.allSettled(tasks);
+        if (searchId !== currentSearchId) return;
+
+        let combined = [];
+        settled.forEach(s => { if (s.status === 'fulfilled') combined.push(...s.value); });
+
+        // 過濾掉不屬於該路/巷的雜訊
+        let filtered = combined.filter(item => item.addr.includes(roadPart));
+
+        // 去除重複座標與地址
+        const dedup = [];
+        for (const item of filtered) {
+          const existIdx = dedup.findIndex(d => d.addr === item.addr);
+          if (existIdx === -1) dedup.push(item);
+          else if (item.source === 'official' && dedup[existIdx].source !== 'official') dedup[existIdx] = item; 
         }
 
-        currentResults = results;
+        // 智慧排名計算：不再把沒中數字的地址刪掉，而是把他們排到後面
+        dedup.sort((a, b) => {
+          let scoreA = 0, scoreB = 0;
+          
+          if (a.source === 'official') scoreA += 1000;
+          if (b.source === 'official') scoreB += 1000;
+
+          if (numPart) {
+            // "33之1" 拆成主號 "33" 和副號 "1"
+            const [mainNum, subNum] = numPart.split('之');
+            
+            const checkMatch = (addr) => {
+              let score = 0;
+              if (subNum) {
+                // 有「之」，完全符合 "33之1號" 或 "33號之1" 得最高分
+                if (addr.includes(`${mainNum}之${subNum}`) || addr.includes(`${mainNum}號之${subNum}`)) score += 200;
+                else if (addr.includes(`${mainNum}號`) || addr.includes(`${mainNum}之`)) score += 100;
+              } else {
+                // 沒有「之」，打 "3"，完全符合 "3號" 最高分
+                if (addr.includes(`${mainNum}號`)) score += 200;
+                else if (addr.includes(`${mainNum}之`)) score += 150; // "3之1號" 次之
+                else if (new RegExp(`${mainNum}\\d+號`).test(addr)) score += 50; // "30號" 再次之
+              }
+              return score;
+            };
+
+            scoreA += checkMatch(a.addr);
+            scoreB += checkMatch(b.addr);
+          }
+          
+          // 若分數一樣，字數短的(例如 "3號") 排在 字數長的("30號") 前面
+          if (scoreA === scoreB) return a.addr.length - b.addr.length;
+          
+          return scoreB - scoreA;
+        });
+
+        currentResults = dedup.slice(0, 40);
+        const elapsed = ((performance.now() - startTime) / 1000).toFixed(2);
 
         if (currentResults.length === 0) {
-          status.innerText = '所有圖資皆查無此門牌，建議直接點擊下方改用 Google Maps 模糊搜尋';
+          status.innerText = `查無資料 (耗時 ${elapsed}秒)，可改用下方 Google Maps 搜尋`;
         } else {
-          status.innerText = `找到 ${currentResults.length} 筆門牌，請在下方點選定位`;
+          status.innerText = `⚡ 混合比對完成 (耗時 ${elapsed}秒) - 找到 ${currentResults.length} 筆相似門牌`;
           renderDropdown();
         }
       } catch (e) {
-        status.innerText = '查詢發生錯誤，請檢查網路連線或稍後再試';
+        status.innerText = '查詢發生錯誤，建議直接點擊下方 Google Maps 搜尋';
       }
     }
 
@@ -309,8 +350,8 @@
       const dropdown = document.getElementById('dropdown');
       dropdown.innerHTML = currentResults.map((item, idx) => {
         const badge = item.source === 'official' 
-          ? '<div class="badge-official">🎯 官方內政部精準圖資</div>'
-          : '<div class="badge-fallback">📍 民間圖資概略位置</div>';
+          ? '<div class="badge-official">🎯 官方圖資</div>'
+          : '<div class="badge-fallback">📍 民間圖資</div>';
           
         return `
           <div class="dropdown-item" onclick="focusOnMap(${idx})">
