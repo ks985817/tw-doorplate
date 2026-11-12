@@ -1,0 +1,260 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>精準門牌導航</title>
+  <style>
+    * { box-sizing: border-box; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
+    body { margin: 0; padding: 16px; background: #121212; color: #ffffff; display: flex; flex-direction: column; min-height: 100vh; }
+    h1 { font-size: 20px; margin: 0 0 14px 0; color: #4dabf7; display: flex; align-items: center; justify-content: space-between; }
+    .card { background: #1e1e1e; padding: 16px; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.4); position: relative; }
+    .toolbar { display: flex; gap: 8px; margin-bottom: 10px; }
+    select { background: #2b2b2b; color: #fff; border: 1px solid #343a40; border-radius: 8px; padding: 8px 10px; font-size: 14px; flex: 1; }
+    .btn-mini { background: #2b2b2b; color: #adb5bd; border: 1px solid #343a40; border-radius: 8px; padding: 8px 12px; font-size: 13px; cursor: pointer; white-space: nowrap; }
+    .btn-mini:active { background: #343a40; color: #fff; }
+    .input-wrap { position: relative; display: flex; align-items: center; }
+    input { width: 100%; padding: 14px 40px 14px 14px; font-size: 16px; border-radius: 8px; border: 1px solid #343a40; background: #2b2b2b; color: #fff; }
+    input:focus { outline: none; border-color: #4dabf7; }
+    .clear-btn { position: absolute; right: 10px; background: none; border: none; color: #868e96; font-size: 18px; cursor: pointer; padding: 4px 8px; display: none; }
+    .status-bar { font-size: 13px; color: #868e96; margin-top: 8px; min-height: 18px; }
+
+    /* 相似地址下拉清單 */
+    .dropdown { margin-top: 8px; background: #25262b; border: 1px solid #373a40; border-radius: 10px; max-height: 360px; overflow-y: auto; display: none; }
+    .dropdown-item { padding: 12px 14px; border-bottom: 1px solid #2c2e33; display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+    .dropdown-item:last-child { border-bottom: none; }
+    .item-info { flex: 1; cursor: pointer; }
+    .item-addr { font-size: 15px; font-weight: 500; color: #f8f9fa; line-height: 1.4; }
+    .item-coord { font-size: 12px; color: #868e96; margin-top: 2px; }
+    .btn-go { background: #2b8a3e; color: #fff; border: none; border-radius: 8px; padding: 10px 14px; font-size: 14px; font-weight: bold; cursor: pointer; white-space: nowrap; }
+    .btn-go:active { background: #237032; }
+
+    /* 歷史紀錄 */
+    .history { margin-top: 20px; }
+    .history-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
+    .history-title { font-size: 13px; color: #868e96; }
+    .history-item { background: #1e1e1e; padding: 12px 14px; border-radius: 10px; margin-bottom: 8px; display: flex; justify-content: space-between; align-items: center; gap: 10px; }
+    .history-text { font-size: 14px; color: #dee2e6; flex: 1; cursor: pointer; }
+  </style>
+</head>
+<body>
+  <h1>📍 台灣門牌模糊導航</h1>
+
+  <div class="card">
+    <div class="toolbar">
+      <select id="city-filter" onchange="saveCity(); triggerSearch();">
+        <option value="">全台灣（不限縣市）</option>
+        <option value="屏東縣">屏東縣</option>
+        <option value="高雄市">高雄市</option>
+        <option value="台南市">台南市</option>
+        <option value="嘉義縣">嘉義縣</option>
+        <option value="嘉義市">嘉義市</option>
+        <option value="雲林縣">雲林縣</option>
+        <option value="彰化縣">彰化縣</option>
+        <option value="台中市">台中市</option>
+        <option value="南投縣">南投縣</option>
+        <option value="苗栗縣">苗栗縣</option>
+        <option value="新竹縣">新竹縣</option>
+        <option value="新竹市">新竹市</option>
+        <option value="桃園市">桃園市</option>
+        <option value="新北市">新北市</option>
+        <option value="台北市">台北市</option>
+        <option value="基隆市">基隆市</option>
+        <option value="宜蘭縣">宜蘭縣</option>
+        <option value="花蓮縣">花蓮縣</option>
+        <option value="台東縣">台東縣</option>
+        <option value="澎湖縣">澎湖縣</option>
+        <option value="金門縣">金門縣</option>
+        <option value="連江縣">連江縣</option>
+      </select>
+      <button class="btn-mini" onclick="pasteClipboard()">📋 貼上</button>
+    </div>
+
+    <div class="input-wrap">
+      <input type="text" id="addr" placeholder="輸入路名與門牌，例：鳳尾路12號" autocomplete="off" oninput="onInputChange()">
+      <button class="clear-btn" id="clear-btn" onclick="clearInput()">✕</button>
+    </div>
+
+    <div class="status-bar" id="status">輸入路名與門牌（免打村里），自動列出相似地址</div>
+
+    <!-- 自動彈出的相似地址清單 -->
+    <div class="dropdown" id="dropdown"></div>
+  </div>
+
+  <div class="history" id="history-section" style="display:none;">
+    <div class="history-header">
+      <span class="history-title">最近導航紀錄</span>
+      <button class="btn-mini" style="padding:4px 8px; font-size:12px;" onclick="clearHistory()">清除紀錄</button>
+    </div>
+    <div id="history-list"></div>
+  </div>
+
+  <script>
+    let debounceTimer = null;
+    let abortController = null;
+    let currentResults = [];
+
+    // 載入記憶的縣市篩選
+    const savedCity = localStorage.getItem('doorplate_city');
+    if (savedCity !== null) {
+      document.getElementById('city-filter').value = savedCity;
+    }
+
+    function saveCity() {
+      localStorage.setItem('doorplate_city', document.getElementById('city-filter').value);
+    }
+
+    // 全形轉半形與清理空白
+    function normalizeText(str) {
+      return str
+        .replace(/[！-～]/g, ch => String.fromCharCode(ch.charCodeAt(0) - 0xFEE0))
+        .replace(/ /g, ' ')
+        .replace(/\s+/g, '')
+        .trim();
+    }
+
+    function onInputChange() {
+      const input = document.getElementById('addr');
+      const clearBtn = document.getElementById('clear-btn');
+      clearBtn.style.display = input.value ? 'block' : 'none';
+
+      clearTimeout(debounceTimer);
+      debounceTimer = setTimeout(triggerSearch, 350);
+    }
+
+    function clearInput() {
+      const input = document.getElementById('addr');
+      input.value = '';
+      document.getElementById('clear-btn').style.display = 'none';
+      document.getElementById('dropdown').style.display = 'none';
+      document.getElementById('status').innerText = '輸入路名與門牌（免打村里），自動列出相似地址';
+      input.focus();
+    }
+
+    async function pasteClipboard() {
+      try {
+        const text = await navigator.clipboard.readText();
+        if (text) {
+          document.getElementById('addr').value = text.trim();
+          onInputChange();
+        }
+      } catch (e) {
+        document.getElementById('status').innerText = '瀏覽器未授權讀取剪貼簿，請直接長按輸入框貼上';
+      }
+    }
+
+    async function triggerSearch() {
+      const raw = normalizeText(document.getElementById('addr').value);
+      const city = document.getElementById('city-filter').value;
+      const status = document.getElementById('status');
+      const dropdown = document.getElementById('dropdown');
+
+      if (raw.length < 2) {
+        dropdown.style.display = 'none';
+        status.innerText = '請繼續輸入（至少 2 個字）...';
+        return;
+      }
+
+      // 若使用者未輸入縣市且有選篩選器，自動補上縣市前綴提高精準度
+      let query = raw;
+      if (city && !raw.startsWith(city) && !raw.startsWith(city.replace('台', '臺'))) {
+        query = city + raw;
+      }
+
+      if (abortController) abortController.abort();
+      abortController = new AbortController();
+
+      status.innerText = `正在搜尋「${query}」的相似門牌...`;
+
+      try {
+        const url = `https://api.nlsc.gov.tw/idc/TextQueryMap/${encodeURIComponent(query)}/15`;
+        const response = await fetch(url, { signal: abortController.signal });
+        const text = await response.text();
+        const parser = new DOMParser();
+        const xml = parser.parseFromString(text, "text/xml");
+        const items = Array.from(xml.getElementsByTagName("ITEM"));
+
+        currentResults = items.map(item => {
+          const content = item.getElementsByTagName("CONTENT")[0]?.textContent || '';
+          const location = item.getElementsByTagName("LOCATION")[0]?.textContent || '';
+          const [lng, lat] = location.split(',');
+          return {
+            addr: content,
+            lat: lat ? parseFloat(lat).toFixed(6) : null,
+            lng: lng ? parseFloat(lng).toFixed(6) : null
+          };
+        }).filter(r => r.addr && r.lat && r.lng);
+
+        if (currentResults.length === 0) {
+          dropdown.style.display = 'none';
+          status.innerText = '找不到相似門牌，試著減少字數（例如只打路名＋數字）';
+        } else {
+          status.innerText = `找到 ${currentResults.length} 筆相似地址，點擊即可導航：`;
+          renderDropdown();
+        }
+      } catch (e) {
+        if (e.name !== 'AbortError') {
+          status.innerText = '查詢連線異常，請確認網路狀態';
+        }
+      }
+    }
+
+    function renderDropdown() {
+      const dropdown = document.getElementById('dropdown');
+      dropdown.innerHTML = currentResults.map((item, idx) => `
+        <div class="dropdown-item">
+          <div class="item-info" onclick="selectAndNavigate(${idx})">
+            <div class="item-addr">${item.addr}</div>
+            <div class="item-coord">${item.lat}, ${item.lng}</div>
+          </div>
+          <button class="btn-go" onclick="selectAndNavigate(${idx})">🧭 導航</button>
+        </div>
+      `).join('');
+      dropdown.style.display = 'block';
+    }
+
+    function selectAndNavigate(idx) {
+      const item = currentResults[idx];
+      if (!item) return;
+      saveHistory(item);
+      openGoogleMaps(item.lat, item.lng);
+    }
+
+    function openGoogleMaps(lat, lng) {
+      const navUrl = `https://www.google.com/maps/dir/?api=1&destination=${lat},${lng}&travelmode=driving`;
+      window.open(navUrl, '_blank');
+    }
+
+    function saveHistory(item) {
+      let list = JSON.parse(localStorage.getItem('doorplate_history_v2') || '[]');
+      list = [item, ...list.filter(i => i.addr !== item.addr)].slice(0, 6);
+      localStorage.setItem('doorplate_history_v2', JSON.stringify(list));
+      renderHistory();
+    }
+
+    function clearHistory() {
+      localStorage.removeItem('doorplate_history_v2');
+      renderHistory();
+    }
+
+    function renderHistory() {
+      const list = JSON.parse(localStorage.getItem('doorplate_history_v2') || '[]');
+      const sec = document.getElementById('history-section');
+      const container = document.getElementById('history-list');
+      if (list.length === 0) {
+        sec.style.display = 'none';
+        return;
+      }
+      sec.style.display = 'block';
+      container.innerHTML = list.map((item, idx) => `
+        <div class="history-item">
+          <div class="history-text" onclick="openGoogleMaps('${item.lat}', '${item.lng}')">${item.addr}</div>
+          <button class="btn-go" style="padding:7px 12px; font-size:13px;" onclick="openGoogleMaps('${item.lat}', '${item.lng}')">導航</button>
+        </div>
+      `).join('');
+    }
+
+    renderHistory();
+  </script>
+</body>
+</html>
