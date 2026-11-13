@@ -10,7 +10,7 @@
     * { box-sizing: border-box; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
     body { margin: 0; padding: 0; height: 100vh; width: 100vw; overflow: hidden; background: #121212; }
     
-    #map { height: 100%; width: 100%; z-index: 1; }
+    #map { height: 100%; width: 100%; z-index: 1; -webkit-touch-callout: none; user-select: none; }
     
     #search-panel { position: absolute; top: 10px; left: 10px; right: 10px; background: rgba(30, 30, 30, 0.95); border-radius: 12px; padding: 12px; z-index: 1000; box-shadow: 0 4px 16px rgba(0,0,0,0.6); backdrop-filter: blur(10px); }
     .toolbar { display: flex; gap: 8px; margin-bottom: 10px; }
@@ -28,24 +28,37 @@
     .btn-gmap:active { background: #2c2e33; }
 
     .status-bar { font-size: 13px; color: #adb5bd; margin-top: 10px; min-height: 18px; text-align: center; }
-    .dropdown { margin-top: 8px; background: #25262b; border: 1px solid #495057; border-radius: 10px; max-height: 40vh; overflow-y: auto; display: none; }
-    .dropdown-item { padding: 12px; border-bottom: 1px solid #343a40; display: flex; align-items: center; justify-content: space-between; gap: 8px; cursor: pointer; }
+    .dropdown { margin-top: 8px; background: #25262b; border: 1px solid #495057; border-radius: 10px; max-height: 42vh; overflow-y: auto; display: none; }
+    .dropdown-item { padding: 12px; border-bottom: 1px solid #343a40; display: flex; align-items: center; justify-content: space-between; gap: 10px; cursor: pointer; }
     .dropdown-item:last-child { border-bottom: none; }
     .dropdown-item:active { background: #2c2e33; }
-    .item-addr { font-size: 15px; font-weight: 500; color: #f8f9fa; line-height: 1.35; }
-    .badge-official { font-size: 11px; padding: 2px 6px; border-radius: 4px; font-weight: 600; background: rgba(43, 138, 62, 0.25); color: #69db7c; border: 1px solid #2b8a3e; margin-top: 4px; display: inline-block;}
-    .badge-fallback { font-size: 11px; padding: 2px 6px; border-radius: 4px; font-weight: 600; background: rgba(240, 140, 0, 0.2); color: #ffd43b; border: 1px solid #e67700; margin-top: 4px; display: inline-block;}
+    .item-main { flex: 1; min-width: 0; }
+    .item-addr { font-size: 15px; font-weight: 500; color: #f8f9fa; line-height: 1.35; word-break: break-all; }
+    .item-meta { display: flex; align-items: center; gap: 6px; margin-top: 4px; flex-wrap: wrap; }
+    .badge-official { font-size: 11px; padding: 2px 6px; border-radius: 4px; font-weight: 600; background: rgba(43, 138, 62, 0.25); color: #69db7c; border: 1px solid #2b8a3e; }
+    .badge-fallback { font-size: 11px; padding: 2px 6px; border-radius: 4px; font-weight: 600; background: rgba(240, 140, 0, 0.2); color: #ffd43b; border: 1px solid #e67700; }
+    .distance-tag { font-size: 12px; font-weight: 600; color: #74c0fc; background: rgba(34, 139, 230, 0.15); border: 1px solid rgba(34, 139, 230, 0.35); padding: 4px 8px; border-radius: 6px; white-space: nowrap; font-family: monospace; }
 
     .leaflet-popup-content-wrapper { background: #1e1e1e; color: #fff; border-radius: 12px; }
     .leaflet-popup-tip { background: #1e1e1e; }
     .popup-content { text-align: center; padding: 4px 2px; }
     .popup-addr { font-size: 16px; font-weight: bold; margin-bottom: 4px; color: #f8f9fa; }
-    .popup-coord { font-size: 12px; color: #868e96; margin-bottom: 12px; font-family: monospace; }
+    .popup-coord { font-size: 12px; color: #868e96; margin-bottom: 4px; font-family: monospace; }
+    .popup-dist { font-size: 12px; color: #74c0fc; margin-bottom: 10px; }
     .btn-nav-big { width: 100%; background: #2b8a3e; color: #fff; border: none; border-radius: 8px; padding: 12px; font-size: 15px; font-weight: bold; cursor: pointer; }
     .btn-nav-big:active { background: #237032; }
 
-    .locate-btn { position: absolute; bottom: 20px; right: 20px; z-index: 1000; background: #228be6; color: white; border: none; border-radius: 50%; width: 50px; height: 50px; font-size: 24px; box-shadow: 0 4px 10px rgba(0,0,0,0.4); cursor: pointer; display: flex; align-items: center; justify-content: center; }
+    .locate-btn { position: absolute; bottom: 24px; right: 20px; z-index: 1000; background: #228be6; color: white; border: none; border-radius: 50%; width: 50px; height: 50px; font-size: 22px; box-shadow: 0 4px 12px rgba(0,0,0,0.5); cursor: pointer; display: flex; align-items: center; justify-content: center; }
     .locate-btn:active { background: #1c7ed6; }
+    .locate-btn.gps-active { background: #1971c2; border: 2px solid #74c0fc; }
+
+    .gps-dot-wrap { position: relative; width: 20px; height: 20px; }
+    .gps-dot-core { position: absolute; top: 4px; left: 4px; width: 12px; height: 12px; background: #228be6; border: 2px solid #fff; border-radius: 50%; box-shadow: 0 0 6px rgba(0,0,0,0.5); z-index: 2; }
+    .gps-dot-pulse { position: absolute; top: 0; left: 0; width: 20px; height: 20px; background: rgba(34, 139, 230, 0.45); border-radius: 50%; animation: gps-pulse 2s infinite ease-out; z-index: 1; }
+    @keyframes gps-pulse {
+      0% { transform: scale(0.8); opacity: 0.9; }
+      100% { transform: scale(2.4); opacity: 0; }
+    }
   </style>
 </head>
 <body>
@@ -59,7 +72,7 @@
     </div>
     <div class="search-row">
       <div class="input-wrap">
-        <input type="text" id="addr" placeholder="例：通潮二巷33-1 或 33之1" autocomplete="off" oninput="onInputChange()" onkeydown="if(event.key==='Enter') triggerSearch()">
+        <input type="text" id="addr" placeholder="例：通潮二巷3 或 通潮二巷3-" autocomplete="off" oninput="onInputChange()" onkeydown="if(event.key==='Enter') triggerSearch()">
         <button class="clear-btn" id="clear-btn" onclick="clearInput()">✕</button>
       </div>
       <button class="btn-search" onclick="triggerSearch()">搜尋</button>
@@ -69,26 +82,55 @@
       <button class="btn-gmap" onclick="openGoogleMapsFuzzy()">🗺️ 找不到？改用 Google Maps 模糊搜尋此地址 →</button>
     </div>
 
-    <div class="status-bar" id="status">支援「-」或「之」混合查詢，自動展開相關門牌</div>
+    <div class="status-bar" id="status">輸入「巷3」自動展開 3號、3-X、3X；長按地圖可手動定點導航</div>
     <div class="dropdown" id="dropdown"></div>
   </div>
 
   <div id="map"></div>
-  <button class="locate-btn" onclick="resetView()">🎯</button>
+  <button class="locate-btn" id="locate-btn" onclick="centerOnUser()" title="定位到目前位置">🎯</button>
 
   <script>
+    const WORKER_URL = 'https://nlsc-proxy.ks985817.workers.dev';
+
     const TW_DATA = {
       "": [],
-      "屏東縣": ["屏東市","潮州鎮","東港鎮","恆春鎮","萬丹鄉","長治鄉","麟洛鄉","九如鄉","里港鄉","鹽埔鄉","高樹鄉","萬巒鄉","內埔鄉","竹田鄉","新埤鄉","枋寮鄉","新園鄉","崁頂鄉","林邊鄉","南州鄉","佳冬鄉","琉球鄉","車城鄉","滿州鄉","枋山鄉","三地門鄉","霧臺鄉","瑪家鄉","泰武鄉","來義鄉","春日鄉","獅子鄉","牡丹鄉"],
+      "基隆市": ["仁愛區","信義區","中正區","中山區","安樂區","暖暖區","七堵區"],
+      "臺北市": ["中正區","大同區","中山區","松山區","大安區","萬華區","信義區","士林區","北投區","內湖區","南港區","文山區"],
+      "新北市": ["板橋區","三重區","中和區","永和區","新莊區","新店區","樹林區","鶯歌區","三峽區","淡水區","汐止區","瑞芳區","土城區","蘆洲區","五股區","泰山區","林口區","深坑區","石碇區","坪林區","三芝區","石門區","八里區","平溪區","雙溪區","貢寮區","金山區","萬里區","烏來區"],
+      "桃園市": ["桃園區","中壢區","大溪區","楊梅區","蘆竹區","大園區","龜山區","八德區","龍潭區","平鎮區","新屋區","觀音區","復興區"],
+      "新竹市": ["東區","北區","香山區"],
+      "新竹縣": ["竹北市","竹東鎮","新埔鎮","關西鎮","湖口鄉","新豐鄉","芎林鄉","橫山鄉","北埔鄉","寶山鄉","峨眉鄉","尖石鄉","五峰鄉"],
+      "苗栗縣": ["苗栗市","頭份市","竹南鎮","後龍鎮","通霄鎮","苑裡鎮","卓蘭鎮","造橋鄉","西湖鄉","頭屋鄉","公館鄉","大湖鄉","銅鑼鄉","三義鄉","獅潭鄉","泰安鄉","南庄鄉","三灣鄉"],
+      "臺中市": ["中區","東區","南區","西區","北區","北屯區","西屯區","南屯區","太平區","大里區","霧峰區","烏日區","豐原區","后里區","石岡區","東勢區","和平區","新社區","潭子區","大雅區","神岡區","大肚區","沙鹿區","龍井區","梧棲區","清水區","大甲區","外埔區","大安區"],
+      "彰化縣": ["彰化市","員林市","和美鎮","鹿港鎮","溪湖鎮","二林鎮","田中鎮","北斗鎮","花壇鄉","芬園鄉","大村鄉","永靖鄉","伸港鄉","線西鄉","福興鄉","秀水鄉","埔心鄉","埔鹽鄉","大城鄉","芳苑鄉","竹塘鄉","社頭鄉","二水鄉","田尾鄉","埤頭鄉","溪州鄉"],
+      "南投縣": ["南投市","埔里鎮","草屯鎮","竹山鎮","集集鎮","名間鄉","鹿谷鄉","中寮鄉","魚池鄉","國姓鄉","水里鄉","信義鄉","仁愛鄉"],
+      "雲林縣": ["斗六市","斗南鎮","虎尾鎮","西螺鎮","土庫鎮","北港鎮","古坑鄉","大埤鄉","莿桐鄉","林內鄉","二崙鄉","崙背鄉","麥寮鄉","東勢鄉","褒忠鄉","臺西鄉","元長鄉","四湖鄉","口湖鄉","水林鄉"],
+      "嘉義市": ["東區","西區"],
+      "嘉義縣": ["太保市","朴子市","布袋鎮","大林鎮","民雄鄉","溪口鄉","新港鄉","六腳鄉","東石鄉","義竹鄉","鹿草鄉","水上鄉","中埔鄉","竹崎鄉","梅山鄉","番路鄉","大埔鄉","阿里山鄉"],
+      "臺南市": ["中西區","東區","南區","北區","安平區","安南區","永康區","歸仁區","新化區","左鎮區","玉井區","楠西區","南化區","仁德區","關廟區","龍崎區","官田區","麻豆區","佳里區","西港區","七股區","將軍區","學甲區","北門區","新營區","後壁區","白河區","東山區","六甲區","下營區","柳營區","鹽水區","善化區","大內區","山上區","新市區","安定區"],
       "高雄市": ["楠梓區","左營區","鼓山區","三民區","鹽埕區","前金區","新興區","苓雅區","前鎮區","旗津區","小港區","鳳山區","林園區","大寮區","大樹區","大社區","仁武區","鳥松區","岡山區","橋頭區","燕巢區","田寮區","阿蓮區","路竹區","湖內區","茄萣區","永安區","彌陀區","梓官區","旗山區","美濃區","六龜區","甲仙區","杉林區","內門區","茂林區","桃源區","那瑪夏區"],
-      "台南市": ["中西區","東區","南區","北區","安平區","安南區","永康區","歸仁區","新化區","左鎮區","玉井區","楠西區","南化區","仁德區","關廟區","龍崎區","官田區","麻豆區","佳里區","西港區","七股區","將軍區","學甲區","北門區","新營區","後壁區","白河區","東山區","六甲區","下營區","柳營區","鹽水區","善化區","大內區","山上區","新市區","安定區"]
+      "屏東縣": ["屏東市","潮州鎮","東港鎮","恆春鎮","萬丹鄉","長治鄉","麟洛鄉","九如鄉","里港鄉","鹽埔鄉","高樹鄉","萬巒鄉","內埔鄉","竹田鄉","新埤鄉","枋寮鄉","新園鄉","崁頂鄉","林邊鄉","南州鄉","佳冬鄉","琉球鄉","車城鄉","滿州鄉","枋山鄉","三地門鄉","霧臺鄉","瑪家鄉","泰武鄉","來義鄉","春日鄉","獅子鄉","牡丹鄉"],
+      "宜蘭縣": ["宜蘭市","羅東鎮","蘇澳鎮","頭城鎮","礁溪鄉","壯圍鄉","員山鄉","冬山鄉","五結鄉","三星鄉","大同鄉","南澳鄉"],
+      "花蓮縣": ["花蓮市","鳳林鎮","玉里鎮","新城鄉","吉安鄉","壽豐鄉","光復鄉","豐濱鄉","瑞穗鄉","富里鄉","秀林鄉","萬榮鄉","卓溪鄉"],
+      "臺東縣": ["臺東市","成功鎮","關山鎮","卑南鄉","鹿野鄉","池上鄉","東河鄉","長濱鄉","太麻里鄉","大武鄉","綠島鄉","海端鄉","延平鄉","金峰鄉","達仁鄉","蘭嶼鄉"],
+      "澎湖縣": ["馬公市","湖西鄉","白沙鄉","西嶼鄉","望安鄉","七美鄉"],
+      "金門縣": ["金城鎮","金沙鎮","金湖鎮","金寧鄉","烈嶼鄉","烏坵鄉"],
+      "連江縣": ["南竿鄉","北竿鄉","莒光鄉","東引鄉"]
     };
+
+    const ALL_CITIES = Object.keys(TW_DATA).filter(Boolean);
+    const ALL_TOWNS = new Set(Object.values(TW_DATA).flat());
 
     let map = null;
     let markerLayer = null;
     let currentResults = [];
     let debounceTimer = null;
     let currentSearchId = 0;
+
+    let userLocation = null;
+    let userMarker = null;
+    let userAccuracyCircle = null;
+    let hasInitialCentered = false;
 
     function init() {
       const citySelect = document.getElementById('city-filter');
@@ -100,29 +142,280 @@
         citySelect.appendChild(opt);
       });
 
-      citySelect.value = localStorage.getItem('doorplate_city_v13') || '屏東縣';
+      const savedCity = localStorage.getItem('doorplate_city_v14');
+      citySelect.value = (savedCity !== null && TW_DATA[savedCity]) ? savedCity : '屏東縣';
       populateTowns(citySelect.value);
-      const savedTown = localStorage.getItem('doorplate_town_v13');
+
+      const savedTown = localStorage.getItem('doorplate_town_v14');
       if (savedTown && TW_DATA[citySelect.value]?.includes(savedTown)) {
         townSelect.value = savedTown;
       }
 
-      map = L.map('map', { zoomControl: false }).setView([22.5505, 120.5435], 14); 
+      map = L.map('map', { zoomControl: false }).setView([22.5505, 120.5435], 14);
       L.tileLayer('https://wmts.nlsc.gov.tw/wmts/EMAP/default/GoogleMapsCompatible/{z}/{y}/{x}', {
         maxZoom: 20,
         attribution: '© 內政部國土測繪中心'
       }).addTo(map);
 
       markerLayer = L.featureGroup().addTo(map);
+      initMapLongPress();
+      initGeolocation();
     }
 
-    function resetView() {
-      map.setView([22.5505, 120.5435], 14);
+    function initMapLongPress() {
+      const mapEl = map.getContainer();
+      let pressTimer = null;
+      let startX = 0;
+      let startY = 0;
+      const HOLD_MS = 550;
+      const MOVE_TOLERANCE = 10;
+
+      const clearPress = () => {
+        if (pressTimer) {
+          clearTimeout(pressTimer);
+          pressTimer = null;
+        }
+      };
+
+      const isUIControl = (target) => {
+        return target.closest('.leaflet-popup') ||
+               target.closest('.leaflet-marker-icon') ||
+               target.closest('.leaflet-control');
+      };
+
+      mapEl.addEventListener('touchstart', (e) => {
+        if (e.touches.length !== 1 || isUIControl(e.target)) {
+          clearPress();
+          return;
+        }
+        const touch = e.touches[0];
+        startX = touch.clientX;
+        startY = touch.clientY;
+        const latlng = map.mouseEventToLatLng(touch);
+
+        clearPress();
+        pressTimer = setTimeout(() => {
+          pressTimer = null;
+          if (navigator.vibrate) navigator.vibrate(40);
+          dropManualPin(latlng.lat, latlng.lng);
+        }, HOLD_MS);
+      }, { passive: true });
+
+      mapEl.addEventListener('touchmove', (e) => {
+        if (!pressTimer) return;
+        if (e.touches.length !== 1) {
+          clearPress();
+          return;
+        }
+        const touch = e.touches[0];
+        if (Math.hypot(touch.clientX - startX, touch.clientY - startY) > MOVE_TOLERANCE) {
+          clearPress();
+        }
+      }, { passive: true });
+
+      mapEl.addEventListener('touchend', clearPress, { passive: true });
+      mapEl.addEventListener('touchcancel', clearPress, { passive: true });
+
+      mapEl.addEventListener('mousedown', (e) => {
+        if (e.button !== 0 || isUIControl(e.target)) return;
+        startX = e.clientX;
+        startY = e.clientY;
+        const latlng = map.mouseEventToLatLng(e);
+
+        clearPress();
+        pressTimer = setTimeout(() => {
+          pressTimer = null;
+          dropManualPin(latlng.lat, latlng.lng);
+        }, HOLD_MS);
+      });
+
+      mapEl.addEventListener('mousemove', (e) => {
+        if (!pressTimer) return;
+        if (Math.hypot(e.clientX - startX, e.clientY - startY) > MOVE_TOLERANCE) {
+          clearPress();
+        }
+      });
+
+      mapEl.addEventListener('mouseup', clearPress);
+      mapEl.addEventListener('mouseleave', clearPress);
+
+      map.on('dragstart zoomstart', clearPress);
+
+      mapEl.addEventListener('contextmenu', (e) => {
+        if (!e.target.closest('.leaflet-popup')) {
+          e.preventDefault();
+        }
+      });
+    }
+
+    function dropManualPin(lat, lng) {
+      const latStr = lat.toFixed(6);
+      const lngStr = lng.toFixed(6);
+      const dist = userLocation
+        ? calcDistanceMeters(userLocation.lat, userLocation.lng, lat, lng)
+        : null;
+
+      document.getElementById('dropdown').style.display = 'none';
+      const distSuffix = dist !== null ? `（距離 ${formatDistance(dist)}）` : '';
+      document.getElementById('status').textContent = `📌 手動選定座標：${latStr}, ${lngStr}${distSuffix}`;
+
+      markerLayer.clearLayers();
+
+      const manualIcon = L.divIcon({
+        className: '',
+        html: `<svg width="30" height="42" viewBox="0 0 30 42" style="filter: drop-shadow(0 3px 5px rgba(0,0,0,0.55));">
+                 <path d="M15 0C6.716 0 0 6.716 0 15c0 10.5 15 27 15 27s15-16.5 15-27C30 6.716 23.284 0 15 0z" fill="#f76707" stroke="#fff" stroke-width="2"/>
+                 <circle cx="15" cy="15" r="5.5" fill="#fff"/>
+               </svg>`,
+        iconSize: [30, 42],
+        iconAnchor: [15, 42],
+        popupAnchor: [0, -38]
+      });
+
+      const marker = L.marker([lat, lng], { icon: manualIcon }).addTo(markerLayer);
+
+      const popupWrap = buildNavigationPopup({
+        title: '📌 手動選定位置',
+        lat: latStr,
+        lng: lngStr,
+        distance: dist
+      });
+
+      marker.bindPopup(popupWrap, { minWidth: 220 }).openPopup();
+    }
+
+    function buildNavigationPopup({ title, lat, lng, distance }) {
+      const popupWrap = document.createElement('div');
+      popupWrap.className = 'popup-content';
+
+      const addrEl = document.createElement('div');
+      addrEl.className = 'popup-addr';
+      addrEl.textContent = title;
+
+      const coordEl = document.createElement('div');
+      coordEl.className = 'popup-coord';
+      coordEl.textContent = `${lat}, ${lng}`;
+
+      popupWrap.appendChild(addrEl);
+      popupWrap.appendChild(coordEl);
+
+      if (distance !== null && distance !== undefined) {
+        const distEl = document.createElement('div');
+        distEl.className = 'popup-dist';
+        distEl.textContent = `直線距離約 ${formatDistance(distance)}`;
+        popupWrap.appendChild(distEl);
+      }
+
+      const navBtn = document.createElement('button');
+      navBtn.className = 'btn-nav-big';
+      navBtn.textContent = '🧭 開啟 Google Maps 導航';
+      navBtn.addEventListener('click', () => launchGoogleMaps(lat, lng));
+      popupWrap.appendChild(navBtn);
+
+      return popupWrap;
+    }
+
+    function initGeolocation() {
+      if (!('geolocation' in navigator)) return;
+
+      navigator.geolocation.watchPosition(
+        (pos) => {
+          const { latitude, longitude, accuracy } = pos.coords;
+          userLocation = { lat: latitude, lng: longitude, accuracy };
+          document.getElementById('locate-btn').classList.add('gps-active');
+          updateUserMarker();
+
+          if (!hasInitialCentered && markerLayer.getLayers().length === 0) {
+            hasInitialCentered = true;
+            map.setView([latitude, longitude], 16);
+          }
+        },
+        (err) => {
+          console.warn('GPS 定位未授權或暫時無法取得:', err.message);
+        },
+        { enableHighAccuracy: true, timeout: 10000, maximumAge: 15000 }
+      );
+    }
+
+    function updateUserMarker() {
+      if (!userLocation || !map) return;
+      const latlng = [userLocation.lat, userLocation.lng];
+
+      if (!userMarker) {
+        const gpsIcon = L.divIcon({
+          className: '',
+          html: '<div class="gps-dot-wrap"><div class="gps-dot-pulse"></div><div class="gps-dot-core"></div></div>',
+          iconSize: [20, 20],
+          iconAnchor: [10, 10]
+        });
+        userMarker = L.marker(latlng, { icon: gpsIcon, interactive: false, zIndexOffset: 1000 }).addTo(map);
+        userAccuracyCircle = L.circle(latlng, {
+          radius: userLocation.accuracy,
+          color: '#228be6',
+          fillColor: '#228be6',
+          fillOpacity: 0.12,
+          weight: 1,
+          interactive: false
+        }).addTo(map);
+      } else {
+        userMarker.setLatLng(latlng);
+        userAccuracyCircle.setLatLng(latlng).setRadius(userLocation.accuracy);
+      }
+    }
+
+    function centerOnUser() {
+      const status = document.getElementById('status');
+      if (userLocation) {
+        map.flyTo([userLocation.lat, userLocation.lng], 17, { animate: true, duration: 0.8 });
+        status.textContent = `📡 已定位目前位置 (誤差約 ${Math.round(userLocation.accuracy)}m)`;
+        return;
+      }
+
+      if (!('geolocation' in navigator)) {
+        status.textContent = '⚠️ 此瀏覽器不支援 GPS 定位';
+        return;
+      }
+
+      status.textContent = '📡 正在取得目前 GPS 位置...';
+      navigator.geolocation.getCurrentPosition(
+        (pos) => {
+          userLocation = { lat: pos.coords.latitude, lng: pos.coords.longitude, accuracy: pos.coords.accuracy };
+          document.getElementById('locate-btn').classList.add('gps-active');
+          updateUserMarker();
+          map.flyTo([userLocation.lat, userLocation.lng], 17, { animate: true, duration: 0.8 });
+          status.textContent = `📡 已定位目前位置 (誤差約 ${Math.round(userLocation.accuracy)}m)`;
+        },
+        () => {
+          status.textContent = '⚠️ 無法取得 GPS 權限，請確認手機定位已開啟';
+        },
+        { enableHighAccuracy: true, timeout: 8000 }
+      );
+    }
+
+    function calcDistanceMeters(lat1, lng1, lat2, lng2) {
+      const R = 6371000;
+      const toRad = deg => deg * Math.PI / 180;
+      const dLat = toRad(lat2 - lat1);
+      const dLng = toRad(lng2 - lng1);
+      const a = Math.sin(dLat / 2) ** 2 +
+                Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) * Math.sin(dLng / 2) ** 2;
+      return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+    }
+
+    function formatDistance(meters) {
+      if (meters == null || isNaN(meters)) return '';
+      if (meters < 1000) return `${Math.round(meters)} m`;
+      return `${(meters / 1000).toFixed(1)} km`;
     }
 
     function populateTowns(city) {
       const townSelect = document.getElementById('town-filter');
-      townSelect.innerHTML = '<option value="">不限鄉鎮</option>';
+      townSelect.innerHTML = '';
+      const defaultOpt = document.createElement('option');
+      defaultOpt.value = '';
+      defaultOpt.textContent = '不限鄉鎮';
+      townSelect.appendChild(defaultOpt);
+
       (TW_DATA[city] || []).forEach(town => {
         const opt = document.createElement('option');
         opt.value = town;
@@ -133,20 +426,20 @@
 
     function onCityChange() {
       const city = document.getElementById('city-filter').value;
-      localStorage.setItem('doorplate_city_v13', city);
-      localStorage.setItem('doorplate_town_v13', '');
+      localStorage.setItem('doorplate_city_v14', city);
+      localStorage.setItem('doorplate_town_v14', '');
       populateTowns(city);
     }
 
     function onTownChange() {
-      localStorage.setItem('doorplate_town_v13', document.getElementById('town-filter').value);
+      localStorage.setItem('doorplate_town_v14', document.getElementById('town-filter').value);
     }
 
     function onInputChange() {
       const input = document.getElementById('addr');
       document.getElementById('clear-btn').style.display = input.value ? 'block' : 'none';
       clearTimeout(debounceTimer);
-      debounceTimer = setTimeout(triggerSearch, 650); 
+      debounceTimer = setTimeout(triggerSearch, 650);
     }
 
     function clearInput() {
@@ -154,22 +447,44 @@
       input.value = '';
       document.getElementById('clear-btn').style.display = 'none';
       document.getElementById('dropdown').style.display = 'none';
-      document.getElementById('status').innerText = '支援「-」或「之」混合查詢，自動展開相關門牌';
+      document.getElementById('status').textContent = '輸入「巷3」自動展開 3號、3-X、3X；長按地圖可手動定點導航';
       markerLayer.clearLayers();
       input.focus();
     }
 
-    // 將地址拆分成「路名/巷名」與「門牌號碼」，並處理 "33-1" -> "33之1"
+    // 解析路名、主號、附號，並保留使用者是否輸入了「-」或「之」分隔符
     function parseAddressParts(raw) {
-      const match = raw.match(/^(.*?(?:路|街|大道|巷|弄|段))(.*)$/);
+      const match = raw.match(/^(.*(?:路|街|大道|段|村|里|鄰|巷|弄|衖))(.*)$/);
       if (match) {
-        let numPart = match[2].replace(/號.*$/, '').replace(/-/g, '之').trim();
-        return { roadPart: match[1], numPart };
+        const roadPart = match[1];
+        const rawNumSection = match[2].replace(/(?:號|樓).*$/, '').trim();
+        const hasSubDelimiter = /[-之]/.test(rawNumSection);
+        const normalizedNum = rawNumSection.replace(/-/g, '之');
+
+        let coreRoad = roadPart.replace(/台/g, '臺');
+        for (const c of ALL_CITIES) {
+          if (coreRoad.startsWith(c)) {
+            coreRoad = coreRoad.slice(c.length);
+            break;
+          }
+        }
+        for (const t of ALL_TOWNS) {
+          if (coreRoad.startsWith(t)) {
+            coreRoad = coreRoad.slice(t.length);
+            break;
+          }
+        }
+        return {
+          roadPart,
+          coreRoad: coreRoad || roadPart,
+          numPart: normalizedNum,
+          hasSubDelimiter
+        };
       }
-      return { roadPart: raw, numPart: '' };
+      return { roadPart: raw, coreRoad: raw.replace(/台/g, '臺'), numPart: '', hasSubDelimiter: false };
     }
 
-    async function fetchWithTimeout(url, timeoutMs = 3000) {
+    async function fetchWithTimeout(url, timeoutMs = 4500) {
       const controller = new AbortController();
       const timer = setTimeout(() => controller.abort(), timeoutMs);
       try {
@@ -179,60 +494,55 @@
       }
     }
 
-    // 引擎一：向內政部索取圖資 (Proxy 競速)
-    async function fetchNLSC(queryStr, limit = 50) {
-      const targetUrl = `https://api.nlsc.gov.tw/idc/TextQueryMap/${encodeURIComponent(queryStr)}/${limit}`;
-      const proxies = [
-        { url: `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(targetUrl)}`, type: 'text' },
-        { url: `https://corsproxy.io/?${encodeURIComponent(targetUrl)}`, type: 'text' },
-        { url: `https://api.allorigins.win/get?url=${encodeURIComponent(targetUrl)}`, type: 'json' }
-      ];
-
+    async function fetchNLSC(queryStr, limit = 10) {
       try {
-        const fastest = await Promise.any(proxies.map(async (proxy) => {
-          const res = await fetchWithTimeout(proxy.url, 3500);
-          if (!res.ok) throw new Error('Bad proxy');
-          let xmlStr = proxy.type === 'json' ? (await res.json()).contents : await res.text();
-          if (!xmlStr || !xmlStr.includes('<ITEM>')) return [];
-          
-          const xml = new DOMParser().parseFromString(xmlStr, "text/xml");
-          return Array.from(xml.getElementsByTagName("ITEM")).map(item => {
-            const [lng, lat] = (item.getElementsByTagName("LOCATION")[0]?.textContent || '').split(',');
-            return {
-              addr: item.getElementsByTagName("CONTENT")[0]?.textContent || '',
-              lat: parseFloat(lat).toFixed(6),
-              lng: parseFloat(lng).toFixed(6),
-              source: 'official'
-            };
-          }).filter(i => i.lat && i.lng && !isNaN(i.lat));
-        }));
-        return fastest || [];
-      } catch (e) {
+        const reqUrl = `${WORKER_URL}/?q=${encodeURIComponent(queryStr)}&limit=${limit}`;
+        const res = await fetchWithTimeout(reqUrl, 4500);
+        if (!res.ok) return [];
+
+        const xmlStr = await res.text();
+        if (!xmlStr || !xmlStr.includes('<ITEM>')) return [];
+
+        const xml = new DOMParser().parseFromString(xmlStr, 'text/xml');
+        return Array.from(xml.getElementsByTagName('ITEM')).map(item => {
+          const locText = item.getElementsByTagName('LOCATION')[0]?.textContent || '';
+          const [lngStr, latStr] = locText.split(',');
+          const lat = parseFloat(latStr);
+          const lng = parseFloat(lngStr);
+          return {
+            addr: (item.getElementsByTagName('CONTENT')[0]?.textContent || '').trim(),
+            lat: Number.isFinite(lat) ? lat.toFixed(6) : '',
+            lng: Number.isFinite(lng) ? lng.toFixed(6) : '',
+            source: 'official'
+          };
+        }).filter(i => i.addr && i.lat && i.lng);
+      } catch {
         return [];
       }
     }
 
-    // 引擎二：民間圖資直連備援
     async function fetchArcGISFallback(fullQuery) {
       try {
         const url = `https://geocode.arcgis.com/arcgis/rest/services/World/GeocodeServer/findAddressCandidates?SingleLine=${encodeURIComponent(fullQuery)}&countryCode=TWN&outFields=Match_addr,Addr_type&maxLocations=10&f=json`;
         const res = await fetchWithTimeout(url, 3000);
+        if (!res.ok) return [];
         const data = await res.json();
         return (data.candidates || []).map(c => ({
-          addr: c.address,
+          addr: String(c.address || '').trim(),
           lat: Number(c.location.y).toFixed(6),
           lng: Number(c.location.x).toFixed(6),
           source: 'fallback'
-        }));
-      } catch (e) {
+        })).filter(i => i.addr && i.lat && i.lng);
+      } catch {
         return [];
       }
     }
 
     async function triggerSearch() {
-      let raw = document.getElementById('addr').value
+      const raw = document.getElementById('addr').value
         .replace(/[！-～]/g, ch => String.fromCharCode(ch.charCodeAt(0) - 0xFEE0))
-        .replace(/\s+/g, '').trim();
+        .replace(/\s+/g, '')
+        .trim();
 
       const city = document.getElementById('city-filter').value;
       const town = document.getElementById('town-filter').value;
@@ -240,166 +550,231 @@
       const dropdown = document.getElementById('dropdown');
 
       if (raw.length < 2) {
-        status.innerText = '請繼續輸入...';
+        status.textContent = '請繼續輸入...';
         return;
       }
 
       const searchId = ++currentSearchId;
       const startTime = performance.now();
 
+      const normRaw = raw.replace(/台/g, '臺');
       let prefix = '';
-      if (city && !raw.includes(city)) prefix += city;
-      if (town && !raw.includes(town)) prefix += town;
-      
-      const { roadPart, numPart } = parseAddressParts(raw);
-      
-      // 組合查詢字串
-      const qBaseLane = prefix + roadPart; 
-      
-      // 針對「之」的特殊處理：產生兩種不同格式的字串去政府資料庫碰運氣
-      // 如果打 33之1，會產生 "33之1" 以及 "33號之1"
-      let exactQueries = [];
-      if (numPart) {
-        exactQueries.push(prefix + roadPart + numPart); // "通潮二巷33之1"
-        if (numPart.includes('之')) {
-          exactQueries.push(prefix + roadPart + numPart.replace('之', '號之')); // "通潮二巷33號之1"
+      if (city && !normRaw.includes(city)) prefix += city;
+      if (town && !normRaw.includes(town)) prefix += town;
+
+      const { roadPart, coreRoad, numPart, hasSubDelimiter } = parseAddressParts(raw);
+      const [rawMain, rawSub] = numPart ? numPart.split('之') : ['', ''];
+      const mainNum = rawMain.replace(/\D/g, '');
+      const subNum = rawSub ? rawSub.replace(/\D/g, '') : '';
+
+      const baseRoad = prefix + roadPart;
+      const tasks = [fetchArcGISFallback(prefix + raw)];
+
+      // 針對 NLSC 結構化精確查詢特性，建立並行候選查詢矩陣
+      if (mainNum && subNum) {
+        // 情況 1：完整指定主號與附號（例：3-4 或 3之4）
+        tasks.push(fetchNLSC(`${baseRoad}${mainNum}之${subNum}`, 5));
+        tasks.push(fetchNLSC(`${baseRoad}${mainNum}-${subNum}`, 5));
+        tasks.push(fetchNLSC(`${baseRoad}${mainNum}`, 5));
+      } else if (mainNum && hasSubDelimiter && !subNum) {
+        // 情況 2：輸入主號並加上「-」或「之」（例：3- 或 3之），集中展開 3之1 ~ 3之15
+        tasks.push(fetchNLSC(`${baseRoad}${mainNum}`, 5));
+        for (let sub = 1; sub <= 15; sub++) {
+          tasks.push(fetchNLSC(`${baseRoad}${mainNum}之${sub}`, 3));
+        }
+      } else if (mainNum) {
+        // 情況 3：僅輸入主號（例：3），同步展開 3號、3之1~3之12、以及 30~39號
+        tasks.push(fetchNLSC(`${baseRoad}${mainNum}`, 5));
+        for (let sub = 1; sub <= 12; sub++) {
+          tasks.push(fetchNLSC(`${baseRoad}${mainNum}之${sub}`, 3));
+        }
+        if (mainNum.length <= 2) {
+          for (let d = 0; d <= 9; d++) {
+            tasks.push(fetchNLSC(`${baseRoad}${mainNum}${d}`, 3));
+          }
+        }
+      } else {
+        // 情況 4：僅輸入路名/巷名未輸入號碼，探測 1~10 號避免純路名查無資料
+        for (let n = 1; n <= 10; n++) {
+          tasks.push(fetchNLSC(`${baseRoad}${n}`, 3));
         }
       }
 
-      status.innerText = `[深度檢索中] 正在掃描「${qBaseLane}」所有關聯門牌...`;
+      status.textContent = `[並行展開中] 正在檢索「${baseRoad}」相關與近似門牌...`;
       dropdown.style.display = 'none';
       markerLayer.clearLayers();
 
       try {
-        const tasks = [
-          fetchNLSC(qBaseLane, 50), // 先抓整條巷子 50 筆墊底，包含這條巷子的 1號, 3號, 33號
-          fetchArcGISFallback(prefix + raw)
-        ];
-        
-        // 將不同格式的精確號碼一併發出請求
-        exactQueries.forEach(q => tasks.push(fetchNLSC(q, 5)));
-
         const settled = await Promise.allSettled(tasks);
         if (searchId !== currentSearchId) return;
 
-        let combined = [];
-        settled.forEach(s => { if (s.status === 'fulfilled') combined.push(...s.value); });
+        const combined = [];
+        settled.forEach(s => {
+          if (s.status === 'fulfilled') combined.push(...s.value);
+        });
 
-        // 過濾掉不屬於該路/巷的雜訊
-        let filtered = combined.filter(item => item.addr.includes(roadPart));
+        const filtered = combined.filter(item =>
+          item.addr.replace(/台/g, '臺').includes(coreRoad)
+        );
 
-        // 去除重複座標與地址
+        // 去重（官方圖資優先覆蓋民間圖資）
         const dedup = [];
         for (const item of filtered) {
           const existIdx = dedup.findIndex(d => d.addr === item.addr);
-          if (existIdx === -1) dedup.push(item);
-          else if (item.source === 'official' && dedup[existIdx].source !== 'official') dedup[existIdx] = item; 
+          if (existIdx === -1) {
+            dedup.push(item);
+          } else if (item.source === 'official' && dedup[existIdx].source !== 'official') {
+            dedup[existIdx] = item;
+          }
         }
 
-        // 智慧排名計算：不再把沒中數字的地址刪掉，而是把他們排到後面
-        dedup.sort((a, b) => {
-          let scoreA = 0, scoreB = 0;
-          
-          if (a.source === 'official') scoreA += 1000;
-          if (b.source === 'official') scoreB += 1000;
+        // 同時支援連字號「-」與「之」的邊界正則
+        const exactSubRegex = (mainNum && subNum)
+          ? new RegExp(`(^|\\D)${mainNum}(?:號)?[-之]${subNum}(?:號|$|\\D)`)
+          : null;
+        const exactMainOnlyRegex = mainNum
+          ? new RegExp(`(^|\\D)${mainNum}號(?![-之])`)
+          : null;
+        const mainWithSubRegex = mainNum
+          ? new RegExp(`(^|\\D)${mainNum}(?:號)?[-之]\\d+`)
+          : null;
+        const prefixMainOnlyRegex = mainNum
+          ? new RegExp(`(^|\\D)${mainNum}\\d+號(?![-之])`)
+          : null;
+        const prefixWithSubRegex = mainNum
+          ? new RegExp(`(^|\\D)${mainNum}\\d+(?:號)?[-之]\\d+`)
+          : null;
 
-          if (numPart) {
-            // "33之1" 拆成主號 "33" 和副號 "1"
-            const [mainNum, subNum] = numPart.split('之');
-            
-            const checkMatch = (addr) => {
-              let score = 0;
-              if (subNum) {
-                // 有「之」，完全符合 "33之1號" 或 "33號之1" 得最高分
-                if (addr.includes(`${mainNum}之${subNum}`) || addr.includes(`${mainNum}號之${subNum}`)) score += 200;
-                else if (addr.includes(`${mainNum}號`) || addr.includes(`${mainNum}之`)) score += 100;
-              } else {
-                // 沒有「之」，打 "3"，完全符合 "3號" 最高分
-                if (addr.includes(`${mainNum}號`)) score += 200;
-                else if (addr.includes(`${mainNum}之`)) score += 150; // "3之1號" 次之
-                else if (new RegExp(`${mainNum}\\d+號`).test(addr)) score += 50; // "30號" 再次之
-              }
-              return score;
-            };
+        dedup.forEach(item => {
+          item.distance = userLocation
+            ? calcDistanceMeters(userLocation.lat, userLocation.lng, parseFloat(item.lat), parseFloat(item.lng))
+            : null;
 
-            scoreA += checkMatch(a.addr);
-            scoreB += checkMatch(b.addr);
+          let score = item.source === 'official' ? 1000 : 0;
+
+          if (mainNum) {
+            if (subNum) {
+              // 指定完整附號（例：3-4）：3-4號 > 3號 / 3-X號 > 3X號
+              if (exactSubRegex.test(item.addr)) score += 400;
+              else if (exactMainOnlyRegex.test(item.addr) || mainWithSubRegex.test(item.addr)) score += 220;
+              else if (prefixMainOnlyRegex.test(item.addr) || prefixWithSubRegex.test(item.addr)) score += 100;
+            } else if (hasSubDelimiter) {
+              // 結尾有「-」或「之」（例：3-）：3-X號 優先於 3號
+              if (mainWithSubRegex.test(item.addr)) score += 400;
+              else if (exactMainOnlyRegex.test(item.addr)) score += 260;
+              else if (prefixWithSubRegex.test(item.addr)) score += 160;
+            } else {
+              // 僅輸入主號（例：3）：3號 > 3-X號 > 3X號 > 3X-Y號
+              if (exactMainOnlyRegex.test(item.addr)) score += 400;
+              else if (mainWithSubRegex.test(item.addr)) score += 320;
+              else if (prefixMainOnlyRegex.test(item.addr)) score += 240;
+              else if (prefixWithSubRegex.test(item.addr)) score += 180;
+            }
           }
-          
-          // 若分數一樣，字數短的(例如 "3號") 排在 字數長的("30號") 前面
-          if (scoreA === scoreB) return a.addr.length - b.addr.length;
-          
-          return scoreB - scoreA;
+          item.score = score;
         });
 
-        currentResults = dedup.slice(0, 40);
+        dedup.sort((a, b) => {
+          if (b.score !== a.score) return b.score - a.score;
+          if (a.distance !== null && b.distance !== null && Math.abs(a.distance - b.distance) > 15) {
+            return a.distance - b.distance;
+          }
+          return a.addr.length - b.addr.length;
+        });
+
+        currentResults = dedup.slice(0, 50);
         const elapsed = ((performance.now() - startTime) / 1000).toFixed(2);
 
         if (currentResults.length === 0) {
-          status.innerText = `查無資料 (耗時 ${elapsed}秒)，可改用下方 Google Maps 搜尋`;
+          status.textContent = `查無資料 (${elapsed}秒)，可改用 Google Maps 搜尋或長按地圖定點`;
         } else {
-          status.innerText = `⚡ 混合比對完成 (耗時 ${elapsed}秒) - 找到 ${currentResults.length} 筆相似門牌`;
+          const gpsHint = userLocation ? '・已依距離排序' : '';
+          status.textContent = `⚡ 比對完成 (${elapsed}秒) - 找到 ${currentResults.length} 筆門牌${gpsHint}`;
           renderDropdown();
         }
-      } catch (e) {
-        status.innerText = '查詢發生錯誤，建議直接點擊下方 Google Maps 搜尋';
+      } catch {
+        status.textContent = '查詢發生錯誤，可點擊下方 Google Maps 或長按地圖手動定點';
       }
     }
 
     function renderDropdown() {
       const dropdown = document.getElementById('dropdown');
-      dropdown.innerHTML = currentResults.map((item, idx) => {
-        const badge = item.source === 'official' 
-          ? '<div class="badge-official">🎯 官方圖資</div>'
-          : '<div class="badge-fallback">📍 民間圖資</div>';
-          
-        return `
-          <div class="dropdown-item" onclick="focusOnMap(${idx})">
-            <div>
-              <div class="item-addr">${item.addr}</div>
-              ${badge}
-            </div>
-          </div>
-        `;
-      }).join('');
+      dropdown.innerHTML = '';
+
+      const frag = document.createDocumentFragment();
+      currentResults.forEach((item, idx) => {
+        const row = document.createElement('div');
+        row.className = 'dropdown-item';
+        row.addEventListener('click', () => focusOnMap(idx));
+
+        const mainCol = document.createElement('div');
+        mainCol.className = 'item-main';
+
+        const addrDiv = document.createElement('div');
+        addrDiv.className = 'item-addr';
+        addrDiv.textContent = item.addr;
+
+        const metaDiv = document.createElement('div');
+        metaDiv.className = 'item-meta';
+
+        const badge = document.createElement('span');
+        badge.className = item.source === 'official' ? 'badge-official' : 'badge-fallback';
+        badge.textContent = item.source === 'official' ? '🎯 官方圖資' : '📍 民間圖資';
+        metaDiv.appendChild(badge);
+
+        mainCol.appendChild(addrDiv);
+        mainCol.appendChild(metaDiv);
+        row.appendChild(mainCol);
+
+        if (item.distance !== null) {
+          const distTag = document.createElement('div');
+          distTag.className = 'distance-tag';
+          distTag.textContent = formatDistance(item.distance);
+          row.appendChild(distTag);
+        }
+
+        frag.appendChild(row);
+      });
+
+      dropdown.appendChild(frag);
       dropdown.style.display = 'block';
     }
 
     function focusOnMap(idx) {
       const item = currentResults[idx];
       if (!item) return;
-      
+
       document.getElementById('dropdown').style.display = 'none';
-      document.getElementById('status').innerText = `📍已定位：${item.addr}`;
+      const distSuffix = item.distance !== null ? `（距離 ${formatDistance(item.distance)}）` : '';
+      document.getElementById('status').textContent = `📍 已定位：${item.addr}${distSuffix}`;
 
       markerLayer.clearLayers();
-      const marker = L.marker([item.lat, item.lng]).addTo(markerLayer);
-      
-      const popupContent = `
-        <div class="popup-content">
-          <div class="popup-addr">${item.addr}</div>
-          <div class="popup-coord">${item.lat}, ${item.lng}</div>
-          <button class="btn-nav-big" onclick="launchGoogleMaps(${item.lat}, ${item.lng})">
-            🧭 傳送至 Google Maps 導航
-          </button>
-        </div>
-      `;
-      
-      marker.bindPopup(popupContent, { minWidth: 220 }).openPopup();
-      map.flyTo([item.lat, item.lng], 19, { animate: true, duration: 1 });
+      const lat = parseFloat(item.lat);
+      const lng = parseFloat(item.lng);
+      const marker = L.marker([lat, lng]).addTo(markerLayer);
+
+      const popupWrap = buildNavigationPopup({
+        title: item.addr,
+        lat: item.lat,
+        lng: item.lng,
+        distance: item.distance
+      });
+
+      marker.bindPopup(popupWrap, { minWidth: 220 }).openPopup();
+      map.flyTo([lat, lng], 19, { animate: true, duration: 1 });
     }
 
     function launchGoogleMaps(lat, lng) {
-      const navUrl = `https://www.google.com/maps/dir/?api=1&destination=${lat},${lng}&travelmode=driving`;
-      window.open(navUrl, '_blank');
+      const navUrl = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(`${lat},${lng}`)}`;
+      window.open(navUrl, '_blank', 'noopener,noreferrer');
     }
 
     function openGoogleMapsFuzzy() {
-      let raw = document.getElementById('addr').value.trim();
+      const raw = document.getElementById('addr').value.trim();
       const city = document.getElementById('city-filter').value;
       const town = document.getElementById('town-filter').value;
       const q = encodeURIComponent(`${city}${town}${raw}`);
-      window.open(`https://www.google.com/maps/search/?api=1&query=${q}`, '_blank');
+      window.open(`https://www.google.com/maps/search/?api=1&query=${q}`, '_blank', 'noopener,noreferrer');
     }
 
     window.onload = init;
