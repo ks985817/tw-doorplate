@@ -28,7 +28,7 @@
     .btn-gmap:active { background: #2c2e33; }
 
     .status-bar { font-size: 13px; color: #adb5bd; margin-top: 10px; min-height: 18px; text-align: center; }
-    .dropdown { margin-top: 8px; background: #25262b; border: 1px solid #495057; border-radius: 10px; max-height: 42vh; overflow-y: auto; display: none; }
+    .dropdown { margin-top: 8px; background: #25262b; border: 1px solid #495057; border-radius: 10px; max-height: 44vh; overflow-y: auto; display: none; }
     .dropdown-item { padding: 12px; border-bottom: 1px solid #343a40; display: flex; align-items: center; justify-content: space-between; gap: 10px; cursor: pointer; }
     .dropdown-item:last-child { border-bottom: none; }
     .dropdown-item:active { background: #2c2e33; }
@@ -36,7 +36,7 @@
     .item-addr { font-size: 15px; font-weight: 500; color: #f8f9fa; line-height: 1.35; word-break: break-all; }
     .item-meta { display: flex; align-items: center; gap: 6px; margin-top: 4px; flex-wrap: wrap; }
     .badge-official { font-size: 11px; padding: 2px 6px; border-radius: 4px; font-weight: 600; background: rgba(43, 138, 62, 0.25); color: #69db7c; border: 1px solid #2b8a3e; }
-    .badge-fallback { font-size: 11px; padding: 2px 6px; border-radius: 4px; font-weight: 600; background: rgba(240, 140, 0, 0.2); color: #ffd43b; border: 1px solid #e67700; }
+    .badge-interpolated { font-size: 11px; padding: 2px 6px; border-radius: 4px; font-weight: 600; background: rgba(224, 49, 49, 0.22); color: #ff8787; border: 1px solid #c92a2a; }
     .distance-tag { font-size: 12px; font-weight: 600; color: #74c0fc; background: rgba(34, 139, 230, 0.15); border: 1px solid rgba(34, 139, 230, 0.35); padding: 4px 8px; border-radius: 6px; white-space: nowrap; font-family: monospace; }
 
     .leaflet-popup-content-wrapper { background: #1e1e1e; color: #fff; border-radius: 12px; }
@@ -44,7 +44,8 @@
     .popup-content { text-align: center; padding: 4px 2px; }
     .popup-addr { font-size: 16px; font-weight: bold; margin-bottom: 4px; color: #f8f9fa; }
     .popup-coord { font-size: 12px; color: #868e96; margin-bottom: 4px; font-family: monospace; }
-    .popup-dist { font-size: 12px; color: #74c0fc; margin-bottom: 10px; }
+    .popup-dist { font-size: 12px; color: #74c0fc; margin-bottom: 8px; }
+    .popup-warn { font-size: 12px; color: #ff8787; background: rgba(224, 49, 49, 0.18); border: 1px solid #c92a2a; border-radius: 6px; padding: 6px 8px; margin-bottom: 10px; line-height: 1.35; }
     .btn-nav-big { width: 100%; background: #2b8a3e; color: #fff; border: none; border-radius: 8px; padding: 12px; font-size: 15px; font-weight: bold; cursor: pointer; }
     .btn-nav-big:active { background: #237032; }
 
@@ -72,7 +73,7 @@
     </div>
     <div class="search-row">
       <div class="input-wrap">
-        <input type="text" id="addr" placeholder="例：通潮二巷3 或 通潮二巷3-" autocomplete="off" oninput="onInputChange()" onkeydown="if(event.key==='Enter') triggerSearch()">
+        <input type="text" id="addr" placeholder="例：通潮二巷3 或 朝昇路80巷74弄1" autocomplete="off" oninput="onInputChange()" onkeydown="if(event.key==='Enter') triggerSearch()">
         <button class="clear-btn" id="clear-btn" onclick="clearInput()">✕</button>
       </div>
       <button class="btn-search" onclick="triggerSearch()">搜尋</button>
@@ -126,11 +127,16 @@
     let currentResults = [];
     let debounceTimer = null;
     let currentSearchId = 0;
+    let lastWorkerError = '';
 
     let userLocation = null;
     let userMarker = null;
     let userAccuracyCircle = null;
     let hasInitialCentered = false;
+
+    function toHalfWidth(str) {
+      return String(str || '').replace(/[！-～]/g, ch => String.fromCharCode(ch.charCodeAt(0) - 0xFEE0));
+    }
 
     function init() {
       const citySelect = document.getElementById('city-filter');
@@ -278,13 +284,14 @@
         title: '📌 手動選定位置',
         lat: latStr,
         lng: lngStr,
-        distance: dist
+        distance: dist,
+        isInterpolated: false
       });
 
       marker.bindPopup(popupWrap, { minWidth: 220 }).openPopup();
     }
 
-    function buildNavigationPopup({ title, lat, lng, distance }) {
+    function buildNavigationPopup({ title, lat, lng, distance, isInterpolated }) {
       const popupWrap = document.createElement('div');
       popupWrap.className = 'popup-content';
 
@@ -304,6 +311,13 @@
         distEl.className = 'popup-dist';
         distEl.textContent = `直線距離約 ${formatDistance(distance)}`;
         popupWrap.appendChild(distEl);
+      }
+
+      if (isInterpolated) {
+        const warnEl = document.createElement('div');
+        warnEl.className = 'popup-warn';
+        warnEl.textContent = '⚠️ 官方圖資查無此門牌，此為民間道路推估（實際可能不存在）';
+        popupWrap.appendChild(warnEl);
       }
 
       const navBtn = document.createElement('button');
@@ -452,7 +466,6 @@
       input.focus();
     }
 
-    // 解析路名、主號、附號，並保留使用者是否輸入了「-」或「之」分隔符
     function parseAddressParts(raw) {
       const match = raw.match(/^(.*(?:路|街|大道|段|村|里|鄰|巷|弄|衖))(.*)$/);
       if (match) {
@@ -484,6 +497,19 @@
       return { roadPart: raw, coreRoad: raw.replace(/台/g, '臺'), numPart: '', hasSubDelimiter: false };
     }
 
+    function extractDoorplateNumber(addr, coreRoad) {
+      const normAddr = toHalfWidth(addr).replace(/台/g, '臺');
+      const idx = normAddr.indexOf(coreRoad);
+      const tail = idx !== -1 ? normAddr.slice(idx + coreRoad.length) : normAddr;
+      const cleanTail = tail.replace(/^.*(?:巷|弄|衖)/, '');
+      const m = cleanTail.match(/(\d+)(?:號)?(?:[-之](\d+))?/);
+      if (!m) return { main: null, sub: null };
+      return {
+        main: parseInt(m[1], 10),
+        sub: m[2] !== undefined ? parseInt(m[2], 10) : null
+      };
+    }
+
     async function fetchWithTimeout(url, timeoutMs = 4500) {
       const controller = new AbortController();
       const timer = setTimeout(() => controller.abort(), timeoutMs);
@@ -494,11 +520,14 @@
       }
     }
 
-    async function fetchNLSC(queryStr, limit = 10) {
+    async function fetchNLSC(queryStr, limit = 50) {
       try {
         const reqUrl = `${WORKER_URL}/?q=${encodeURIComponent(queryStr)}&limit=${limit}`;
         const res = await fetchWithTimeout(reqUrl, 4500);
-        if (!res.ok) return [];
+        if (!res.ok) {
+          lastWorkerError = `HTTP ${res.status}`;
+          return [];
+        }
 
         const xmlStr = await res.text();
         if (!xmlStr || !xmlStr.includes('<ITEM>')) return [];
@@ -509,14 +538,18 @@
           const [lngStr, latStr] = locText.split(',');
           const lat = parseFloat(latStr);
           const lng = parseFloat(lngStr);
+          // 關鍵修正：將 NLSC 回傳的全形數字與符號統一轉為半形
+          const cleanAddr = toHalfWidth(item.getElementsByTagName('CONTENT')[0]?.textContent || '').trim();
           return {
-            addr: (item.getElementsByTagName('CONTENT')[0]?.textContent || '').trim(),
+            addr: cleanAddr,
             lat: Number.isFinite(lat) ? lat.toFixed(6) : '',
             lng: Number.isFinite(lng) ? lng.toFixed(6) : '',
-            source: 'official'
+            source: 'official',
+            isInterpolated: false
           };
         }).filter(i => i.addr && i.lat && i.lng);
-      } catch {
+      } catch (e) {
+        lastWorkerError = e.name === 'AbortError' ? '連線逾時' : 'Worker 連線失敗';
         return [];
       }
     }
@@ -528,10 +561,11 @@
         if (!res.ok) return [];
         const data = await res.json();
         return (data.candidates || []).map(c => ({
-          addr: String(c.address || '').trim(),
+          addr: toHalfWidth(c.address || '').trim(),
           lat: Number(c.location.y).toFixed(6),
           lng: Number(c.location.x).toFixed(6),
-          source: 'fallback'
+          source: 'fallback',
+          isInterpolated: true
         })).filter(i => i.addr && i.lat && i.lng);
       } catch {
         return [];
@@ -539,8 +573,7 @@
     }
 
     async function triggerSearch() {
-      const raw = document.getElementById('addr').value
-        .replace(/[！-～]/g, ch => String.fromCharCode(ch.charCodeAt(0) - 0xFEE0))
+      const raw = toHalfWidth(document.getElementById('addr').value)
         .replace(/\s+/g, '')
         .trim();
 
@@ -556,140 +589,163 @@
 
       const searchId = ++currentSearchId;
       const startTime = performance.now();
+      lastWorkerError = '';
 
       const normRaw = raw.replace(/台/g, '臺');
-      let prefix = '';
-      if (city && !normRaw.includes(city)) prefix += city;
-      if (town && !normRaw.includes(town)) prefix += town;
+      let arcgisPrefix = '';
+      if (city && !normRaw.includes(city)) arcgisPrefix += city;
+      if (town && !normRaw.includes(town)) arcgisPrefix += town;
 
-      const { roadPart, coreRoad, numPart, hasSubDelimiter } = parseAddressParts(raw);
+      const { coreRoad, numPart, hasSubDelimiter } = parseAddressParts(raw);
       const [rawMain, rawSub] = numPart ? numPart.split('之') : ['', ''];
       const mainNum = rawMain.replace(/\D/g, '');
       const subNum = rawSub ? rawSub.replace(/\D/g, '') : '';
+      const targetMain = mainNum ? parseInt(mainNum, 10) : null;
+      const targetSub = subNum ? parseInt(subNum, 10) : null;
 
-      const baseRoad = prefix + roadPart;
-      const tasks = [fetchArcGISFallback(prefix + raw)];
+      const nlscTasks = [fetchNLSC(coreRoad, 100)];
+      if (city) nlscTasks.push(fetchNLSC(`${city}${coreRoad}`, 100));
+      if (town) nlscTasks.push(fetchNLSC(`${town}${coreRoad}`, 100));
 
-      // 針對 NLSC 結構化精確查詢特性，建立並行候選查詢矩陣
-      if (mainNum && subNum) {
-        // 情況 1：完整指定主號與附號（例：3-4 或 3之4）
-        tasks.push(fetchNLSC(`${baseRoad}${mainNum}之${subNum}`, 5));
-        tasks.push(fetchNLSC(`${baseRoad}${mainNum}-${subNum}`, 5));
-        tasks.push(fetchNLSC(`${baseRoad}${mainNum}`, 5));
-      } else if (mainNum && hasSubDelimiter && !subNum) {
-        // 情況 2：輸入主號並加上「-」或「之」（例：3- 或 3之），集中展開 3之1 ~ 3之15
-        tasks.push(fetchNLSC(`${baseRoad}${mainNum}`, 5));
-        for (let sub = 1; sub <= 15; sub++) {
-          tasks.push(fetchNLSC(`${baseRoad}${mainNum}之${sub}`, 3));
-        }
-      } else if (mainNum) {
-        // 情況 3：僅輸入主號（例：3），同步展開 3號、3之1~3之12、以及 30~39號
-        tasks.push(fetchNLSC(`${baseRoad}${mainNum}`, 5));
-        for (let sub = 1; sub <= 12; sub++) {
-          tasks.push(fetchNLSC(`${baseRoad}${mainNum}之${sub}`, 3));
-        }
-        if (mainNum.length <= 2) {
-          for (let d = 0; d <= 9; d++) {
-            tasks.push(fetchNLSC(`${baseRoad}${mainNum}${d}`, 3));
-          }
-        }
-      } else {
-        // 情況 4：僅輸入路名/巷名未輸入號碼，探測 1~10 號避免純路名查無資料
-        for (let n = 1; n <= 10; n++) {
-          tasks.push(fetchNLSC(`${baseRoad}${n}`, 3));
+      if (mainNum) {
+        nlscTasks.push(fetchNLSC(`${coreRoad}${mainNum}`, 50));
+        nlscTasks.push(fetchNLSC(`${coreRoad}${mainNum}之`, 50));
+        nlscTasks.push(fetchNLSC(`${coreRoad}${mainNum}號之`, 50));
+        if (city) nlscTasks.push(fetchNLSC(`${city}${coreRoad}${mainNum}`, 50));
+        if (town) {
+          nlscTasks.push(fetchNLSC(`${town}${coreRoad}${mainNum}`, 50));
+          nlscTasks.push(fetchNLSC(`${town}${coreRoad}${mainNum}之`, 50));
         }
       }
 
-      status.textContent = `[並行展開中] 正在檢索「${baseRoad}」相關與近似門牌...`;
+      if (mainNum && subNum) {
+        nlscTasks.push(fetchNLSC(`${coreRoad}${mainNum}之${subNum}`, 10));
+        nlscTasks.push(fetchNLSC(`${coreRoad}${mainNum}號之${subNum}`, 10));
+        nlscTasks.push(fetchNLSC(`${coreRoad}${mainNum}-${subNum}`, 10));
+      }
+
+      status.textContent = `[深度檢索中] 正在掃描「${coreRoad}」相關與近似門牌...`;
       dropdown.style.display = 'none';
       markerLayer.clearLayers();
 
       try {
-        const settled = await Promise.allSettled(tasks);
+        const [nlscSettled, arcgisResults] = await Promise.all([
+          Promise.allSettled(nlscTasks),
+          fetchArcGISFallback(arcgisPrefix + raw)
+        ]);
         if (searchId !== currentSearchId) return;
 
-        const combined = [];
-        settled.forEach(s => {
-          if (s.status === 'fulfilled') combined.push(...s.value);
+        const officialRaw = [];
+        nlscSettled.forEach(s => {
+          if (s.status === 'fulfilled') officialRaw.push(...s.value);
         });
 
-        const filtered = combined.filter(item =>
-          item.addr.replace(/台/g, '臺').includes(coreRoad)
-        );
+        const validOfficial = officialRaw.filter(item => {
+          const normAddr = item.addr.replace(/台/g, '臺');
+          if (!normAddr.includes(coreRoad)) return false;
+          if (city && !normAddr.includes(city)) return false;
+          return true;
+        });
 
-        // 去重（官方圖資優先覆蓋民間圖資）
+        const pool = validOfficial.length > 0
+          ? validOfficial
+          : arcgisResults.filter(item => {
+              const normAddr = item.addr.replace(/台/g, '臺');
+              if (!normAddr.includes(coreRoad)) return false;
+              if (city && !normAddr.includes(city)) return false;
+              return true;
+            });
+
         const dedup = [];
-        for (const item of filtered) {
-          const existIdx = dedup.findIndex(d => d.addr === item.addr);
-          if (existIdx === -1) {
+        for (const item of pool) {
+          if (!dedup.some(d => d.addr === item.addr)) {
             dedup.push(item);
-          } else if (item.source === 'official' && dedup[existIdx].source !== 'official') {
-            dedup[existIdx] = item;
           }
         }
-
-        // 同時支援連字號「-」與「之」的邊界正則
-        const exactSubRegex = (mainNum && subNum)
-          ? new RegExp(`(^|\\D)${mainNum}(?:號)?[-之]${subNum}(?:號|$|\\D)`)
-          : null;
-        const exactMainOnlyRegex = mainNum
-          ? new RegExp(`(^|\\D)${mainNum}號(?![-之])`)
-          : null;
-        const mainWithSubRegex = mainNum
-          ? new RegExp(`(^|\\D)${mainNum}(?:號)?[-之]\\d+`)
-          : null;
-        const prefixMainOnlyRegex = mainNum
-          ? new RegExp(`(^|\\D)${mainNum}\\d+號(?![-之])`)
-          : null;
-        const prefixWithSubRegex = mainNum
-          ? new RegExp(`(^|\\D)${mainNum}\\d+(?:號)?[-之]\\d+`)
-          : null;
 
         dedup.forEach(item => {
           item.distance = userLocation
             ? calcDistanceMeters(userLocation.lat, userLocation.lng, parseFloat(item.lat), parseFloat(item.lng))
             : null;
 
-          let score = item.source === 'official' ? 1000 : 0;
+          const { main, sub } = extractDoorplateNumber(item.addr, coreRoad);
+          item.main = main;
+          item.sub = sub;
+          item.subDiff = 999999;
+          item.townPriority = (town && item.addr.includes(town)) ? 0 : 1;
 
-          if (mainNum) {
-            if (subNum) {
-              // 指定完整附號（例：3-4）：3-4號 > 3號 / 3-X號 > 3X號
-              if (exactSubRegex.test(item.addr)) score += 400;
-              else if (exactMainOnlyRegex.test(item.addr) || mainWithSubRegex.test(item.addr)) score += 220;
-              else if (prefixMainOnlyRegex.test(item.addr) || prefixWithSubRegex.test(item.addr)) score += 100;
+          let rank = 5;
+          if (targetMain !== null && main !== null) {
+            const isExactMain = main === targetMain;
+            const isPrefixMain = !isExactMain && String(main).startsWith(mainNum);
+
+            if (targetSub !== null) {
+              // 情況 1：完整輸入主號與附號（如 3-5 / 3之5）
+              if (isExactMain && sub === targetSub) {
+                rank = 1;
+              } else if (isExactMain && sub !== null) {
+                rank = 2;
+                item.subDiff = Math.abs(sub - targetSub);
+              } else if (isExactMain && sub === null) {
+                rank = 3;
+              } else if (isPrefixMain) {
+                rank = 4;
+              }
             } else if (hasSubDelimiter) {
-              // 結尾有「-」或「之」（例：3-）：3-X號 優先於 3號
-              if (mainWithSubRegex.test(item.addr)) score += 400;
-              else if (exactMainOnlyRegex.test(item.addr)) score += 260;
-              else if (prefixWithSubRegex.test(item.addr)) score += 160;
+              // 情況 2：輸入主號並帶「-」或「之」（如 3- / 3之）
+              if (isExactMain && sub !== null) {
+                rank = 1;
+              } else if (isExactMain && sub === null) {
+                rank = 2;
+              } else if (isPrefixMain && sub !== null) {
+                rank = 3;
+              } else if (isPrefixMain) {
+                rank = 4;
+              }
             } else {
-              // 僅輸入主號（例：3）：3號 > 3-X號 > 3X號 > 3X-Y號
-              if (exactMainOnlyRegex.test(item.addr)) score += 400;
-              else if (mainWithSubRegex.test(item.addr)) score += 320;
-              else if (prefixMainOnlyRegex.test(item.addr)) score += 240;
-              else if (prefixWithSubRegex.test(item.addr)) score += 180;
+              // 情況 3：僅輸入主號（如 3 或 1）
+              if (isExactMain && sub === null) {
+                rank = 1;
+              } else if (isExactMain && sub !== null) {
+                rank = 2;
+              } else if (isPrefixMain && sub === null) {
+                rank = 3;
+              } else if (isPrefixMain && sub !== null) {
+                rank = 4;
+              }
             }
           }
-          item.score = score;
+          item.rank = rank;
         });
 
         dedup.sort((a, b) => {
-          if (b.score !== a.score) return b.score - a.score;
-          if (a.distance !== null && b.distance !== null && Math.abs(a.distance - b.distance) > 15) {
+          if (a.rank !== b.rank) return a.rank - b.rank;
+          if (a.townPriority !== b.townPriority) return a.townPriority - b.townPriority;
+          if (a.subDiff !== b.subDiff) return a.subDiff - b.subDiff;
+          if (a.main !== null && b.main !== null && a.main !== b.main) {
+            return a.main - b.main;
+          }
+          if (a.sub !== b.sub) {
+            return (a.sub ?? -1) - (b.sub ?? -1);
+          }
+          if (a.distance !== null && b.distance !== null) {
             return a.distance - b.distance;
           }
-          return a.addr.length - b.addr.length;
+          return a.addr.localeCompare(b.addr, 'zh-Hant');
         });
 
-        currentResults = dedup.slice(0, 50);
+        currentResults = dedup.slice(0, 60);
         const elapsed = ((performance.now() - startTime) / 1000).toFixed(2);
 
         if (currentResults.length === 0) {
-          status.textContent = `查無資料 (${elapsed}秒)，可改用 Google Maps 搜尋或長按地圖定點`;
+          const errHint = lastWorkerError ? ` [${lastWorkerError}]` : '';
+          status.textContent = `查無資料 (${elapsed}秒)${errHint}，可改用 Google Maps 或長按地圖定點`;
+        } else if (validOfficial.length === 0) {
+          const errHint = lastWorkerError ? ` [${lastWorkerError}]` : '';
+          status.textContent = `⚠️ 官方無此門牌 (${elapsed}秒)${errHint} - 僅供民間推估參考，請核對底圖`;
+          renderDropdown();
         } else {
-          const gpsHint = userLocation ? '・已依距離排序' : '';
-          status.textContent = `⚡ 比對完成 (${elapsed}秒) - 找到 ${currentResults.length} 筆門牌${gpsHint}`;
+          status.textContent = `⚡ 比對完成 (${elapsed}秒) - 找到 ${currentResults.length} 筆官方門牌`;
           renderDropdown();
         }
       } catch {
@@ -718,8 +774,13 @@
         metaDiv.className = 'item-meta';
 
         const badge = document.createElement('span');
-        badge.className = item.source === 'official' ? 'badge-official' : 'badge-fallback';
-        badge.textContent = item.source === 'official' ? '🎯 官方圖資' : '📍 民間圖資';
+        if (item.source === 'official') {
+          badge.className = 'badge-official';
+          badge.textContent = '🎯 官方圖資';
+        } else {
+          badge.className = 'badge-interpolated';
+          badge.textContent = '⚠️ 民間推估(官方無此門牌)';
+        }
         metaDiv.appendChild(badge);
 
         mainCol.appendChild(addrDiv);
@@ -746,7 +807,8 @@
 
       document.getElementById('dropdown').style.display = 'none';
       const distSuffix = item.distance !== null ? `（距離 ${formatDistance(item.distance)}）` : '';
-      document.getElementById('status').textContent = `📍 已定位：${item.addr}${distSuffix}`;
+      const warnPrefix = item.isInterpolated ? '⚠️ [推估位置] ' : '📍 已定位：';
+      document.getElementById('status').textContent = `${warnPrefix}${item.addr}${distSuffix}`;
 
       markerLayer.clearLayers();
       const lat = parseFloat(item.lat);
@@ -757,10 +819,11 @@
         title: item.addr,
         lat: item.lat,
         lng: item.lng,
-        distance: item.distance
+        distance: item.distance,
+        isInterpolated: item.isInterpolated
       });
 
-      marker.bindPopup(popupWrap, { minWidth: 220 }).openPopup();
+      marker.bindPopup(popupWrap, { minWidth: 230 }).openPopup();
       map.flyTo([lat, lng], 19, { animate: true, duration: 1 });
     }
 
